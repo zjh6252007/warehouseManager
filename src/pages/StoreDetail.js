@@ -16,7 +16,6 @@ const StoreDetail = () =>{
     const dispatch = useDispatch();
     const [form] = useForm();
     const [open,setOpen] = useState(false);
-    const [selectionModel, setSelectionModel] = useState([]);
     const confirm = (id) =>{
         if(id){
         console.log(id);
@@ -79,8 +78,6 @@ const StoreDetail = () =>{
         fetchData();
     }, [dispatch, storeId,navigate]);
     const userList = useSelector(state=>state.user.userList)
-    const user = useSelector(state=>state.user.userInfo);
-
     const handleFormSubmit = async() =>{
         try{
         const values = await form.validateFields();
@@ -112,9 +109,6 @@ const StoreDetail = () =>{
         setOpen(true);
     }
 
-    const handleDeleteSelected = () => {
-        console.log("Deleting selected items", selectionModel);
-    };
 
     const userListWithKeys = userList.map(user => ({ ...user, key: user.id }));
       
