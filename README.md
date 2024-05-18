@@ -1,3 +1,32 @@
+# Warehouse Management System
+<img width="1740" alt="warehouse" src="https://github.com/zjh6252007/warehouseManager/assets/51406959/e1a17c61-f843-4160-8b63-f08f0afd7dd0">
+
+
+
+## Key Features
+Order Management: Create, modify, and cancel orders with ease.
+Receipt Generation: Automatically generate receipts based on orders.
+Sales Analysis: Track and analyze sales revenue, profit, and loss.
+Inventory Import: Upload inventory using CSV files for quick and easy updates.
+Tax Management: Modify tax rates to ensure accurate calculations.
+Employee Accounts: Create and manage employee accounts for secure access.
+
+Technologies Used
+Frontend: React
+Backend: Spring Boot
+Database: MySQL
+State Management: Redux
+UI Library: Ant Design && Mui
+
+## Test Info
+Link: https://appliancemanage.com/  
+Username: test1  
+Password: 12345678!  
+To Create Orders use stuff account or select store first  
+Stuff Account Username: test2  
+Password: 12345678!  
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
