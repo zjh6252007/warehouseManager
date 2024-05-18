@@ -52,10 +52,30 @@ const Reports = () => {
   };
 
   const salesData = useSelector(state => state.sales.salesData);
-  const totalSales = salesData.reduce((total, sale) => {
-    return total + (sale.price || 0) + (sale.warrantyPrice || 0);
-  }, 0);
+  
+  const totalSales = salesData.reduce((acc, sale) => {
+    const { invoiceNumber, price, warrantyPrice, deliveryFee, storeId } = sale;
+    acc.total += (price || 0) + (warrantyPrice || 0);
+    const invoiceKey = `${invoiceNumber}-${storeId}`;
+    if (!acc.invoices.has(invoiceKey)) {
+      acc.total += deliveryFee || 0;
+      acc.invoices.set(invoiceKey, true);
+    }
+  
+    return acc;
+  }, { total: 0, invoices: new Map() });
+  const finalTotalSales = totalSales.total;
 
+  const totalDeliveryFee = salesData.reduce((acc, sale) => {
+    const { invoiceNumber, storeId, deliveryFee } = sale;
+    const invoiceKey = `${invoiceNumber}-${storeId}`;
+    if (!acc.invoices.has(invoiceKey)) {
+      acc.total += deliveryFee || 0;
+      acc.invoices.set(invoiceKey, true);
+    }
+    return acc;
+  }, { total: 0, invoices: new Map() }).total;
+  
   
   const costData = inventory.reduce((cost, inventory) => {
     return cost + (inventory.cost || 0);
@@ -105,20 +125,7 @@ const Reports = () => {
           </Col>
         </Row>
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={3}>
-            <Paper
-              sx={{
-                p: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                height: 120,
-              }}
-            >
-              <TotalSales title="Sales" value={totalSales} />
-            </Paper>
-          </Grid>
-
-          <Grid item xs={12} lg={3}>
+        <Grid item xs={12} lg={2.4}>
             <Paper
               sx={{
                 p: 2,
@@ -130,8 +137,21 @@ const Reports = () => {
               <TotalSales title="Total Costs" value={costData} />
             </Paper>
           </Grid>
+          
+          <Grid item xs={12} lg={2.4}>
+            <Paper
+              sx={{
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                height: 120,
+              }}
+            >
+              <TotalSales title="Sales" value={finalTotalSales} />
+            </Paper>
+          </Grid>
 
-          <Grid item xs={12} lg={3}>
+          <Grid item xs={12} lg={2.4}>
             <Paper
               sx={{
                 p: 2,
@@ -144,7 +164,7 @@ const Reports = () => {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} lg={3}>
+          <Grid item xs={12} lg={2.4}>
             <Paper
               sx={{
                 p: 2,
@@ -154,6 +174,19 @@ const Reports = () => {
               }}
             >
               <TotalSales title="Tax" value={totalTax} />
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} lg={2.4}>
+            <Paper
+              sx={{
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                height: 120,
+              }}
+            >
+              <TotalSales title="Delivery Fee" value={totalDeliveryFee} />
             </Paper>
           </Grid>
 

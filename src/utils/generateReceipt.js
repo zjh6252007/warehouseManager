@@ -6,7 +6,6 @@ const { contact,  invoiceNumber, createdAt, salesperson, address, customer, tota
 
 const {address:storeAddress,phone,storeName} = companyInfo;
     const formattedDate = createdAt.split("T")[0];  
-
     const totalPages = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
@@ -36,10 +35,18 @@ const {address:storeAddress,phone,storeName} = companyInfo;
 
     pdf.text("BILL TO",20,55);
     pdf.setFontSize(10);
-    pdf.text(`${customer}`,20,63);
-    pdf.text(`${address}`,20,68);
-    pdf.text(`${contact}`,20,73);
+    pdf.text(`${customer||''}`,20,63);
+    pdf.text(`${address||''}`,20,68);
+    pdf.text(`${contact||''}`,20,73);
 
+    pdf.text("Delivery Infomation",130,55);
+    if(items[0].deliveryDate){
+        const deliveryDate = items[0].deliveryDate.split("T")[0];
+        pdf.text(`Delivery Date: ${deliveryDate}`,130,63);
+        }else{
+            pdf.text(`Delivery Date: N/A`,130,63);
+        }
+    pdf.text(`Delivery Fee: $${items[0].deliveryFee||'0'}`,130,68)
     pdf.setFontSize(13);
     pdf.text("Model",18,83);
     pdf.text("Serial Number",45,83);

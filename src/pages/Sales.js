@@ -9,6 +9,7 @@ import { fetchStoreDetail } from '../redux/modules/myStore';
 import { useLocation, useParams } from 'react-router-dom';
 import ReturnModalContent from '../components/ReturnModalContent';
 import { clearSalesList } from '../redux/modules/sales';
+import { generateDeliveryOrder } from '../utils/generateDeliveryOrder';
 export default function Sales() {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -28,6 +29,7 @@ export default function Sales() {
       dispatch(fetchStoreDetail(userInfo.storeId));
     } else if (userInfo.role === 'admin' && isStorePage) {
       dispatch(getSalesByStoreId(storeId));
+      dispatch(fetchStoreDetail(storeId));
     } else if (userInfo.role === 'admin') {
       dispatch(getAllSales());
     }
@@ -36,7 +38,6 @@ export default function Sales() {
   const salesInfo = useSelector(state => state.sales.salesList);
   const storeInfo = useSelector(state => state.myStore.currentStore);
 
-  console.log(salesInfo)
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown Date';
     const date = new Date(dateString);
@@ -59,7 +60,7 @@ export default function Sales() {
       salesInfo.forEach((item) => {
         const key = `${item.store.id}-${item.invoiceNumber}`;
         if (!groupedData[key]) {
-          groupedData[key] = { ...item, total: 0, totalTax: 0, items: [] };
+          groupedData[key] = { ...item, total: 0, totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0 };
         }
         groupedData[key].total += item.price;
         groupedData[key].total += item.warrantyPrice;
@@ -68,9 +69,13 @@ export default function Sales() {
         groupedData[key].items.push(item);
       });
     }
-    return Object.values(groupedData);
+    return Object.values(groupedData).map(data => ({
+      ...data,
+      total: data.total + data.deliveryFee
+    }));
   }, [salesInfo]);
 
+  console.log(aggregatedData);
   useEffect(() => {
     const filtered = aggregatedData.filter(item =>
       item.invoiceNumber.includes(searchText) ||
@@ -99,11 +104,12 @@ export default function Sales() {
   };
 
   const handleReceipt = (record, storeInfo) => {
-    console.log(record);
-console.log(storeInfo);
     generateReceipt(record, storeInfo);
   };
 
+  const handleDeliverOrder = (record,storeInfo) =>{
+    generateDeliveryOrder(record,storeInfo);
+  }
   const handleReturnItems = (selectedItems) => {
     if (storeId) {
       dispatch(returnSales(selectedItems, storeId));
@@ -168,6 +174,7 @@ console.log(storeInfo);
             <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
             <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
             <Button type="link" onClick={() => handleReceipt(record, storeInfo)}>Receipt</Button>
+            <Button type="link" onClick={() => handleDeliverOrder(record, storeInfo)}>Delivery Info</Button>
           </Space>
         )
     }]:[])

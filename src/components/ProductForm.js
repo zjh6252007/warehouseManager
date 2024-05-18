@@ -122,8 +122,8 @@ const ProductForm = ({handleClose}) =>{
     }
     const cartList = useSelector(state=>state.cart.cartList);
 
-    const calculateTotalPrice=(cart)=>{
-        return cart.reduce((total,item)=>{
+    const calculateTotalPrice=(customer,cart)=>{
+        let totalPrice = cart.reduce((total,item)=>{
             let itemTotal = parseFloat(item.price);
             if(item.extendedwarranty > 0 && item.warrantyPrice && !isNaN(parseFloat(item.warrantyPrice))){
                 itemTotal += parseFloat(item.warrantyPrice);
@@ -134,6 +134,10 @@ const ProductForm = ({handleClose}) =>{
             }
             return total + itemTotal;
         },0);
+        if (customer.deliveryFee && !isNaN(parseFloat(customer.deliveryFee))) {
+            totalPrice += parseFloat(customer.deliveryFee);
+        }
+        return totalPrice;
     }
     const renderProductDescriptions = (item) => (
         <Descriptions bordered>
@@ -152,14 +156,17 @@ const ProductForm = ({handleClose}) =>{
     );
 
     const renderOtherDescriptions = (customer,cart) =>{
-        const totalPrice = calculateTotalPrice(cart);
+        const totalPrice = calculateTotalPrice(customer,cart);
         return(
         <Descriptions bordered style={{marginBottom:15}}>
             <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
             <Descriptions.Item label="Address">{customer.address}</Descriptions.Item>
             <Descriptions.Item label="Phone">{customer.contact||'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="sales">{customer.sales||'N/A'}</Descriptions.Item>
+            <Descriptions.Item label="Sales">{customer.sales||'N/A'}</Descriptions.Item>
+            <Descriptions.Item label="Delivery Date">{customer.deliveryDate||'N/A'}</Descriptions.Item>
+            <Descriptions.Item label="Delivery Fee">${customer.deliveryFee||'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Total Price" style={{color:'red'}}>${totalPrice.toFixed(2)}</Descriptions.Item>
+
         </Descriptions>
         );
     }
@@ -194,9 +201,8 @@ const ProductForm = ({handleClose}) =>{
                         warranty: (Number(item.freewarranty)||0) + (Number(item.extendedwarranty)||0),
                         warrantyPrice: (item.warrantyPrice||0) * (Number(item.extendedwarranty)||0),
                         taxes:store_info.tax?(item.price*store_info.taxRate*0.01):0,
-                        deliveryFee:item.deliveryFee,
-                        deliveryDate: item.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null
-
+                        deliveryFee:customerData.deliveryFee,
+                        deliveryDate: customerData.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null
                     }))
                 };
                 try{
@@ -335,30 +341,6 @@ const ProductForm = ({handleClose}) =>{
             }}
         />
     </ProForm.Group>
-
-    <ProForm.Group>
-        <ProFormDatePicker
-            name="deliveryDate"
-            label="Delivery Date"
-            width='70%'
-            placeholder="deliveryDate"
-            fieldProps={{
-                format: 'YYYY-MM-DD',
-            }}
-        />
-
-        <ProFormText
-            name="deliveryFee"
-            label="Delivery Fee"
-            width='50%'
-            placeholder="price"
-            initialValue={0}
-            fieldProps={{
-                addonBefore:'$',
-                type:'number'
-            }}
-        />
-    </ProForm.Group>
         </StepsForm.StepForm>
     
         <StepsForm.StepForm
@@ -421,7 +403,33 @@ const ProductForm = ({handleClose}) =>{
             placeholder="Sales Name"
             initialValue={user_info.salesName}
         />
+
+<ProForm.Group>
+        <ProFormDatePicker
+            name="deliveryDate"
+            label="Delivery Date"
+            width='70%'
+            placeholder="deliveryDate"
+            fieldProps={{
+                format: 'YYYY-MM-DD',
+            }}
+        />
+
+        <ProFormText
+            name="deliveryFee"
+            label="Delivery Fee"
+            width='50%'
+            placeholder="price"
+            initialValue={0}
+            fieldProps={{
+                addonBefore:'$',
+                type:'number'
+            }}
+        />
+    </ProForm.Group>
+
         </StepsForm.StepForm>
+
 
         <StepsForm.StepForm
             name="confirm"
