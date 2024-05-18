@@ -1,8 +1,7 @@
-
+# Warehouse Management System
 <img width="1740" alt="warehouse" src="https://github.com/zjh6252007/warehouseManager/assets/51406959/e1a17c61-f843-4160-8b63-f08f0afd7dd0">
 
 
-# Warehouse Management System
 
 ## Key Features
 Order Management: Create, modify, and cancel orders with ease.
