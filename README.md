@@ -12,15 +12,16 @@ Inventory Import: Upload inventory using CSV files for quick and easy updates.
 Tax Management: Modify tax rates to ensure accurate calculations.
 Employee Accounts: Create and manage employee accounts for secure access.
 
-# Link: https://appliancemanage.com/
-# Username: test1
-# Password: 12345678!
 Technologies Used
 Frontend: React
 Backend: Spring Boot
 Database: MySQL
 State Management: Redux
 UI Library: Ant Design && Mui
+# Link: https://appliancemanage.com/
+# Username: test1
+# Password: 12345678!
+
 
 
 # Getting Started with Create React App
