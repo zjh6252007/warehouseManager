@@ -17,7 +17,7 @@ const ProductForm = ({handleClose}) =>{
     const isStorePage = location.pathname.includes('/mystore');
     const store_info = useSelector(state=>state.myStore.currentStore);
     const user_info = useSelector(state=>state.user.userInfo);
-    console.log(user_info);
+
     useEffect(()=>{
     if(isStorePage){
         dispatch(getInventoryById(store_info.id));
@@ -46,10 +46,13 @@ const ProductForm = ({handleClose}) =>{
         price: 0
     });
     const [customerData, setCustomerData] = useState({});
+    const [selectedModel, setSelectedModel] = useState(null);
+
     const handleModelChange = (value) => {
         const relatedItems = inventoryList.filter(item => item.model === value && item.status!== 'sold');
         if (relatedItems.length > 0) {
             const selectedItem = relatedItems[0];
+            setSelectedModel(selectedItem);
             formRef.current?.setFieldsValue({
                 price: selectedItem.unitRetail,
                 type: selectedItem.product,
@@ -160,6 +163,17 @@ const ProductForm = ({handleClose}) =>{
         </Descriptions>
         );
     }
+
+    const validateUnitPrice = (_, value) => {
+        if (selectedModel) {
+            const minPrice = selectedModel.unitRetail * selectedModel.limitPercentage * 0.01;
+            if (value < minPrice) {
+                return Promise.reject(new Error(`Unit price cannot be lower than ${minPrice}`));
+            }
+        }
+        return Promise.resolve();
+    };
+
     return(
     <>
         <StepsForm
@@ -260,7 +274,9 @@ const ProductForm = ({handleClose}) =>{
         <ProFormText
             name="price"
             label="Unit Price"
-            rules={[{required:true}]}
+            rules={[{required:true},
+                { validator: validateUnitPrice }
+            ]}
             placeholder="price"
             fieldProps={{
                 addonBefore: '$',

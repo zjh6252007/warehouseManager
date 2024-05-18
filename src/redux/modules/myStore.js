@@ -84,6 +84,14 @@ const setTaxRate = (storeId,tax) =>async(dispatch)=>{
     return res;
 }
 
-export {getStore,createStore,fetchStoreDetail,setStoreId,updateStoreName,updateStoreAddress,updateStorePhone,switchTaxState,setTaxRate}
+const deleteStore = (id) =>async()=>{
+    try{
+        const res = await request.delete(`/api/store/${id}`)
+        return res;
+    }catch(error){
+        console.log(error)
+    }
+}
+export {getStore,createStore,fetchStoreDetail,setStoreId,updateStoreName,updateStoreAddress,updateStorePhone,switchTaxState,setTaxRate,deleteStore}
 const myStoreReducer = myStore.reducer;
 export default myStoreReducer;

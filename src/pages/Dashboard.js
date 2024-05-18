@@ -109,7 +109,6 @@ export default function Dashboard() {
 
   const handleItemClick =(title)=>{
     setTitle(title);
-    console.log(title);
   };
 
 

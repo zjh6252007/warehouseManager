@@ -68,7 +68,16 @@ export default function MainListItems({isShowStore,onItemClick}){
         Create Order
       </Button>
       )}
-    <Modal title="Create Order" open={open} onCancel={handleClose} footer={null} width={1200} destroyOnClose>
+        <Modal
+      title="Create Order"
+      open={open}
+      onCancel={handleClose}
+      footer={null}
+      width="80vw"
+      style={{ left: '10vh' }} 
+      bodyStyle={{ height: '70vh', overflowY: 'auto' }} 
+      destroyOnClose
+    >
     <div className="container" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
     <div className="leftPanel" style={{ flex:'75%', margin: '10px' }}>
       <ProductForm handleClose={handleClose}/>

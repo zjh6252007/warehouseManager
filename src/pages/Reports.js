@@ -7,16 +7,20 @@ import { getSalesByDate } from '../redux/modules/sales';
 import TotalSales from '../components/TotalSales';
 import { getInventoryById } from '../redux/modules/inventory';
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import EmployeeSales from '../components/EmployeeSales';
 import Charts from '../components/Chart';
 
 const Reports = () => {
   const dispatch = useDispatch();
   const { storeId } = useParams();
-
+  const location = useLocation();
+  const isStorePage = location.pathname.includes('/mystore');
+  
   useEffect(() => {
+    if(isStorePage){
     dispatch(getInventoryById(storeId));
+    }
     const dateRange = {
       start: moment().format('YYYY-MM-DDTHH:mm:ss'),
       end: moment().format('YYYY-MM-DDTHH:mm:ss')

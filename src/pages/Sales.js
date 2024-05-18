@@ -49,6 +49,7 @@ export default function Sales() {
 
   const aggreatedData = React.useMemo(() => {
     const groupedData = {};
+    if(salesInfo){
     salesInfo.forEach((item) => {
       if (!groupedData[item.invoiceNumber]) {
         groupedData[item.invoiceNumber] = { ...item, total: 0, totalTax:0,items: [] };
@@ -59,10 +60,10 @@ export default function Sales() {
       groupedData[item.invoiceNumber].totalTax += item.taxes || 0;
       groupedData[item.invoiceNumber].items.push(item);
     });
+  }
     return Object.values(groupedData);
   }, [salesInfo]);
 
-  console.log( aggreatedData)
   useEffect(() => {
     const filtered = aggreatedData.filter(item =>
       item.invoiceNumber.includes(searchText) ||
@@ -95,7 +96,6 @@ export default function Sales() {
   };
 
   const handleReturnItems = (selectedItems) => {
-    console.log('Selected items for return:', selectedItems);
     if(storeId){
     dispatch(returnSales(selectedItems,storeId))
     }else{

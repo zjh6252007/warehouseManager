@@ -50,6 +50,24 @@ const uploadInventoryFile=(file,storeId) =>async(dispatch) =>{
     }
     return res;
 }
-export {getAllInventory,getInventory,decreseInventoryQty,getInventoryById,uploadInventoryFile};
+
+const updateLimitPercentage = (data, storeId) => async (dispatch) => {
+    try {
+        const res = await request.post('/api/inventory/updateLimitPercentage', data,{
+            params: {
+                storeId: storeId
+            }
+        });
+        if (res.code === 0) {
+            dispatch(getInventoryById(storeId));
+        } else {
+            console.error('Update failed', res.message);
+        }
+    } catch (error) {
+        console.error('Update failed', error);
+    }
+}
+
+export {getAllInventory,getInventory,decreseInventoryQty,getInventoryById,uploadInventoryFile,updateLimitPercentage};
 const inventoryReducer = inventory.reducer;
 export default inventoryReducer

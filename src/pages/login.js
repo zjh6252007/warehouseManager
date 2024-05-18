@@ -46,7 +46,6 @@ const dispatch = useDispatch();
     {
       message.error(res.message);
     }
-    console.log(res);
   };
 
   return (
