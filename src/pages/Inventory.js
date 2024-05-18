@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile} from '../redux/modules/inventory';
+import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile } from '../redux/modules/inventory';
 import { useEffect, useState } from 'react';
-import { Button, Box } from '@mui/material';
+import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
 
 const Inventory = () => {
@@ -13,8 +13,8 @@ const Inventory = () => {
   const isStorePage = location.pathname.includes('/mystore');
   const { storeId } = useParams();
   const [selectedRows, setSelectedRows] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  
   useEffect(() => {
     if (isStorePage) {
       dispatch(getInventoryById(storeId));
@@ -24,7 +24,6 @@ const Inventory = () => {
       dispatch(getInventory());
     }
   }, [dispatch, userInfo.role, isStorePage, storeId]);
-
 
   const columns = [
     { field: 'itemDescription', headerName: 'Item Description', width: 250 },
@@ -63,7 +62,7 @@ const Inventory = () => {
     },
     { field: 'product', headerName: 'Product', width: 150 }
   ];
-  
+
   if (userInfo.role === 'admin') {
     columns.push({
       field: 'cost', headerName: 'Cost', width: 100,
@@ -71,10 +70,15 @@ const Inventory = () => {
     });
   }
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      dispatch(uploadInventoryFile(file, storeId));
+      setLoading(true);
+      const res = await dispatch(uploadInventoryFile(file, storeId));
+      setLoading(false);
+      if (res.code !== 0) {
+        alert('File upload failed');
+      }
     }
   };
 
@@ -90,8 +94,9 @@ const Inventory = () => {
           <Button
             variant="contained"
             component="label"
+            disabled={loading}
           >
-            Import Inventory
+            {loading ? <CircularProgress size={24} /> : 'Import Inventory'}
             <input
               type="file"
               hidden

@@ -3,11 +3,12 @@ import { Container, Grid, Paper } from '@mui/material';
 import { DatePicker, Row, Col } from 'antd';
 import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
-import { getSalesByDate } from '../redux/modules/sales';
+import { getSalesByDate,getAllSalesByRange } from '../redux/modules/sales';
 import TotalSales from '../components/TotalSales';
 import { getInventoryById } from '../redux/modules/inventory';
 import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
+import { getAllInventory } from '../redux/modules/inventory';
 import EmployeeSales from '../components/EmployeeSales';
 import Charts from '../components/Chart';
 
@@ -20,12 +21,18 @@ const Reports = () => {
   useEffect(() => {
     if(isStorePage){
     dispatch(getInventoryById(storeId));
+    }else{
+      dispatch(getAllInventory());
     }
     const dateRange = {
       start: moment().format('YYYY-MM-DDTHH:mm:ss'),
       end: moment().format('YYYY-MM-DDTHH:mm:ss')
     };
-    dispatch(getSalesByDate(dateRange,storeId));
+    if(isStorePage){
+    dispatch(getSalesByDate(dateRange,storeId))
+    }else{
+      dispatch(getAllSalesByRange(dateRange))
+    };
   }, [dispatch, storeId]);
 
   const inventory = useSelector(state => state.inventory.inventoryList);
@@ -36,7 +43,11 @@ const Reports = () => {
         start: moment(dateStrings[0]).startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
         end: moment(dateStrings[1]).endOf('day').format('YYYY-MM-DDTHH:mm:ss')
       };
+      if(isStorePage){
       dispatch(getSalesByDate(dateRange, storeId));
+      }else{
+        dispatch(getAllSalesByRange(dateRange));
+      }
     }
   };
 

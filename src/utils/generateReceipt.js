@@ -1,29 +1,28 @@
 import jsPDF from "jspdf"
 
 const generateReceipt = (orderInfo,companyInfo) =>{
-    const pdf= new jsPDF();
-
+const pdf= new jsPDF();
 const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items} = orderInfo;
 
 const {address:storeAddress,phone,storeName} = companyInfo;
-    const formattedDate = createdAt.split("T")[0];  // 日期格式化
+    const formattedDate = createdAt.split("T")[0];  
 
     const totalPages = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         pdf.setTextColor(250); // Light gray for watermark
         pdf.setFontSize(60); // Large font size for visibility
-        pdf.text(storeName, 30, pdf.internal.pageSize.height / 3, {
+        pdf.text(storeName|| " ", 30, pdf.internal.pageSize.height / 3, {
             angle: -45  // Diagonal angle
         });
     }
 
     pdf.setTextColor(70);
     pdf.setFontSize(16);
-    pdf.text(storeName,20,20);
+    pdf.text(storeName||" ",20,20);
     pdf.setFontSize(10);
-    pdf.text(storeAddress,20,30);
-    pdf.text(phone,20,35);
+    pdf.text(storeAddress||" ",20,30);
+    pdf.text(phone||" ",20,35);
 
     pdf.setFontSize(16);
     pdf.text("RECEIPT", 165,20);

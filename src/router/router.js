@@ -31,6 +31,10 @@ const router = createBrowserRouter([
             element:<Profile/>
         },
         {
+            path:"/reports",
+            element:<Reports/>
+        },
+        {
             path:"/store/mystore/:storeId",
             element:<StoreDetail/>
         },

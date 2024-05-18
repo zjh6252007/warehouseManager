@@ -75,7 +75,6 @@ export default function MainListItems({isShowStore,onItemClick}){
       footer={null}
       width="80vw"
       style={{ left: '10vh' }} 
-      bodyStyle={{ height: '70vh', overflowY: 'auto' }} 
       destroyOnClose
     >
     <div className="container" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
@@ -117,14 +116,12 @@ export default function MainListItems({isShowStore,onItemClick}){
         <ListItemText primary="Store" />
       </ListItemButton>
     )}
-    {!isShowStore &&(
           <ListItemButton component={Link} to={`/sales`} onClick={()=>onItemClick("Sales")}>
           <ListItemIcon>
             <ShoppingCartIcon />
           </ListItemIcon>
           <ListItemText primary="Sales" />
         </ListItemButton>
-    )}
 
     <ListItemButton component={Link} to="/inventory" onClick={()=>onItemClick("Inventory")} >
       <ListItemIcon>
@@ -133,6 +130,15 @@ export default function MainListItems({isShowStore,onItemClick}){
       <ListItemText primary="Inventory"  />
     </ListItemButton>
     
+    {isShowStore &&(
+    <ListItemButton component={Link} to = {`/reports`} onClick={()=>onItemClick("Reports")}>
+    <ListItemIcon>
+      <SummarizeIcon />
+    </ListItemIcon>
+    <ListItemText primary="Reports" />
+  </ListItemButton>
+    )}
+
     <ListItemButton component={Link} to="/profile" onClick={()=>onItemClick("Profile")}>
         <ListItemIcon>
           <AccountCircleIcon />

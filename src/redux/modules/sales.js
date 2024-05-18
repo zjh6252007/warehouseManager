@@ -13,11 +13,14 @@ const sales = createSlice({
         },
         setSalesData(state,action){
             state.salesData = action.payload;
-        }
+        },
+        clearSalesList(state) {
+            state.salesList = [];
+        },
     }
 })
 
-const {setSalesList,setSalesData} = sales.actions;
+const {setSalesList,setSalesData,clearSalesList} = sales.actions;
 
 const postSales = (data) => async(dispatch)=>{
 try{
@@ -76,11 +79,34 @@ const returnSales = (returnList,storeId) =>async(dispatch)=>{
         dispatch(getSalesByStoreId(storeId));
         return res;
     }catch(error){
-        console.log(error)
+        console.log(error);
     }
 }
 
+const getAllSales = () =>async(dispatch)=>{
+    try{
+        const res = await request.get("/api/sales/getAll");
+        dispatch(setSalesList(res.data));
+        return res;
+    }catch(error){
+        console.log(error);
+    }
+}
 
-export {postSales,getSalesByStoreId,deleteSales,getSalesByDate,returnSales}
+const getAllSalesByRange =(date) =>async(dispatch) =>{
+    try{
+        const res = await request.get('/api/sales/getAllByRange',{
+            params:{
+                start:date.start,
+                end:date.end
+            }
+        });
+        dispatch(setSalesData(res.data));
+        return res;
+    }catch(error){
+        console.log(error)
+    }
+}
+export {postSales,getSalesByStoreId,deleteSales,getSalesByDate,returnSales,getAllSales,getAllSalesByRange,clearSalesList}
 const salesReducer = sales.reducer;
 export default salesReducer;

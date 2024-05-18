@@ -1,18 +1,21 @@
 import * as React from 'react';
-import { Table, Space, Modal, Input,Button } from 'antd';
+import { Table, Space, Modal, Input, Button } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
-import { getSalesByStoreId, deleteSales } from '../redux/modules/sales';
+import { getSalesByStoreId, deleteSales, getAllSales, returnSales } from '../redux/modules/sales';
 import { getUserInfo } from '../redux/modules/user';
 import { generateReceipt } from '../utils/generateReceipt';
 import { fetchStoreDetail } from '../redux/modules/myStore';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import ReturnModalContent from '../components/ReturnModalContent';
-import { returnSales } from '../redux/modules/sales';
+import { clearSalesList } from '../redux/modules/sales';
 export default function Sales() {
   const dispatch = useDispatch();
+  const location = useLocation();
+  const isStorePage = location.pathname.includes('/mystore');
 
   useEffect(() => {
+    dispatch(clearSalesList())
     dispatch(getUserInfo());
   }, [dispatch]);
 
@@ -23,14 +26,17 @@ export default function Sales() {
     if (userInfo.role === 'user') {
       dispatch(getSalesByStoreId(userInfo.storeId));
       dispatch(fetchStoreDetail(userInfo.storeId));
-    } else {
+    } else if (userInfo.role === 'admin' && isStorePage) {
       dispatch(getSalesByStoreId(storeId));
+    } else if (userInfo.role === 'admin') {
+      dispatch(getAllSales());
     }
   }, [dispatch, userInfo.storeId, userInfo.role, storeId]);
 
   const salesInfo = useSelector(state => state.sales.salesList);
-  const store_info = useSelector(state => state.myStore.currentStore);
+  const storeInfo = useSelector(state => state.myStore.currentStore);
 
+  console.log(salesInfo)
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown Date';
     const date = new Date(dateString);
@@ -47,72 +53,80 @@ export default function Sales() {
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
 
-  const aggreatedData = React.useMemo(() => {
+  const aggregatedData = React.useMemo(() => {
     const groupedData = {};
-    if(salesInfo){
-    salesInfo.forEach((item) => {
-      if (!groupedData[item.invoiceNumber]) {
-        groupedData[item.invoiceNumber] = { ...item, total: 0, totalTax:0,items: [] };
-      }
-      groupedData[item.invoiceNumber].total += item.price;
-      groupedData[item.invoiceNumber].total += item.warrantyPrice;
-      groupedData[item.invoiceNumber].total += item.taxes || 0;
-      groupedData[item.invoiceNumber].totalTax += item.taxes || 0;
-      groupedData[item.invoiceNumber].items.push(item);
-    });
-  }
+    if (salesInfo) {
+      salesInfo.forEach((item) => {
+        const key = `${item.store.id}-${item.invoiceNumber}`;
+        if (!groupedData[key]) {
+          groupedData[key] = { ...item, total: 0, totalTax: 0, items: [] };
+        }
+        groupedData[key].total += item.price;
+        groupedData[key].total += item.warrantyPrice;
+        groupedData[key].total += item.taxes || 0;
+        groupedData[key].totalTax += item.taxes || 0;
+        groupedData[key].items.push(item);
+      });
+    }
     return Object.values(groupedData);
   }, [salesInfo]);
 
   useEffect(() => {
-    const filtered = aggreatedData.filter(item =>
+    const filtered = aggregatedData.filter(item =>
       item.invoiceNumber.includes(searchText) ||
       item.customer.toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredData(filtered);
-  }, [searchText, aggreatedData]);
+  }, [searchText, aggregatedData]);
 
-  const handelOpenReturn = (record) => {
-    setReturnList(record.items || []); // Ensure returnList is always an array
+  const handleOpenReturn = (record) => {
+    setReturnList(record.items || []);
     setSelectedRecord(record);
     setOpenReturn(true);
   };
 
-  const handelCloseReturn = () => {
+  const handleCloseReturn = () => {
     setOpenReturn(false);
   };
 
-  const handelOpen = (record) => {
+  const handleOpen = (record) => {
     setSelectedRecord(record);
     setOpen(true);
   };
 
-  const handelClose = () => {
+  const handleClose = () => {
     setOpen(false);
   };
 
-  const handelReceipt = (record, store_info) => {
-    generateReceipt(record, store_info);
+  const handleReceipt = (record, storeInfo) => {
+    console.log(record);
+console.log(storeInfo);
+    generateReceipt(record, storeInfo);
   };
 
   const handleReturnItems = (selectedItems) => {
-    if(storeId){
-    dispatch(returnSales(selectedItems,storeId))
-    }else{
-      dispatch(returnSales(selectedItems,userInfo.storeId));
+    if (storeId) {
+      dispatch(returnSales(selectedItems, storeId));
+    } else {
+      dispatch(returnSales(selectedItems, userInfo.storeId));
     }
-    handelCloseReturn();
+    handleCloseReturn();
   };
 
-  const handelCancelOrder = (invoiceNumber, storeId) => {
+  const handleCancelOrder = (invoiceNumber, storeId) => {
     dispatch(deleteSales(invoiceNumber, storeId))
       .then(() => {
         dispatch(getSalesByStoreId(storeId));
-        handelClose();
+        handleClose();
       });
   };
 
   const columns = [
+    ...(userInfo.role === 'admin' && !isStorePage ? [{
+      title: 'Store Address',
+      dataIndex: ['store', 'address'],
+      key: 'storeAddress',
+    }] : []),
     {
       title: 'Invoice#',
       dataIndex: 'invoiceNumber',
@@ -145,18 +159,18 @@ export default function Sales() {
       key: 'total',
       render: (text) => `$${parseFloat(text).toFixed(2)}`
     },
-    {
-      title: 'Modify Order',
-      dataIndex: '',
-      key: 'x',
-      render: (_, record) => (
-        <Space size="middle">
-          <Button type="link" onClick={() => handelOpenReturn(record)}>Return</Button>
-          <Button type="link" onClick={() => handelOpen(record)}>Cancel</Button>
-          <Button type="link" onClick={() => handelReceipt(record, store_info)}>Receipt</Button>
-        </Space>
-      )
-    }
+    ...(isStorePage?[{
+        title: 'Modify Order',
+        dataIndex: '',
+        key: 'x',
+        render: (_, record) => (
+          <Space size="middle">
+            <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
+            <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
+            <Button type="link" onClick={() => handleReceipt(record, storeInfo)}>Receipt</Button>
+          </Space>
+        )
+    }]:[])
   ];
 
   return (
@@ -175,9 +189,9 @@ export default function Sales() {
       <Modal
         title="Cancel Order"
         open={open}
-        onCancel={handelClose}
+        onCancel={handleClose}
         destroyOnClose
-        onOk={() => handelCancelOrder(selectedRecord.invoiceNumber, userInfo.role === 'admin' ? storeId : userInfo.storeId)}
+        onOk={() => handleCancelOrder(selectedRecord.invoiceNumber, userInfo.role === 'admin' ? storeId : userInfo.storeId)}
       >
         <div>
           Click Ok to cancel this order.
@@ -187,7 +201,7 @@ export default function Sales() {
       <Modal
         title="Return Order"
         open={openReturn}
-        onCancel={handelCloseReturn}
+        onCancel={handleCloseReturn}
         destroyOnClose
         footer={null}
       >

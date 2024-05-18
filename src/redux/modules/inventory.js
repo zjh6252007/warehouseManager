@@ -41,7 +41,8 @@ const uploadInventoryFile=(file,storeId) =>async(dispatch) =>{
     const res = await request.post('/api/csv/upload',formData,{
         headers:{
             'Content-Type':'multipart/form-data'
-        }
+        },
+        timeout: 300000
     });
     if(res.code === 0){
         dispatch(getAllInventory());
