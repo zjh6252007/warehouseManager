@@ -1,7 +1,7 @@
 import axios from "axios"
 import { getToken,deleteToken } from "./token"
 const request = axios.create({
-    baseURL:'http://localhost:8080',
+    baseURL:'https://bk-warehouse.com',
     timeout: 5000
 })
 
