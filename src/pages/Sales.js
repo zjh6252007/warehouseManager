@@ -75,7 +75,6 @@ export default function Sales() {
     }));
   }, [salesInfo]);
 
-  console.log(aggregatedData);
   useEffect(() => {
     const filtered = aggregatedData.filter(item =>
       item.invoiceNumber.includes(searchText) ||
@@ -165,7 +164,7 @@ export default function Sales() {
       key: 'total',
       render: (text) => `$${parseFloat(text).toFixed(2)}`
     },
-    ...(isStorePage?[{
+    ...(isStorePage||userInfo.role === 'user'?[{
         title: 'Modify Order',
         dataIndex: '',
         key: 'x',
