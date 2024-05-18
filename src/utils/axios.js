@@ -2,7 +2,7 @@ import axios from "axios"
 import { getToken,deleteToken } from "./token"
 const request = axios.create({
     baseURL:'https://bk-warehouse.com',
-    timeout: 10000
+    timeout: 5000
 })
 
 request.interceptors.request.use((config)=>{

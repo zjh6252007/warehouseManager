@@ -129,6 +129,7 @@ const Inventory = () => {
             selectedIDs.has(row.id) && row.status !== 'sold'
           ).map((row) => row.id);
           setSelectedRows(selectedItems);
+          console.log('Selected Rows:', selectedRows);
         }}
         isRowSelectable={(params) => params.row.status !== 'sold'}
       />

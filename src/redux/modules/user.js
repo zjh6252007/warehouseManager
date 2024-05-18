@@ -62,7 +62,9 @@ const getUserInfo = () =>async(dispatch,getState)=>{
 const register = (data) =>async(dispatch) =>{
     try{
     const res = await request.post("/api/user/register",data);
+    if(res.code === 0){
     dispatch(updateUserList(res.data));
+    }
     return res;
     }catch(error)
     {
