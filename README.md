@@ -4,7 +4,7 @@
 
 # Warehouse Management System
 
-# Key Features
+## Key Features
 Order Management: Create, modify, and cancel orders with ease.
 Receipt Generation: Automatically generate receipts based on orders.
 Sales Analysis: Track and analyze sales revenue, profit, and loss.
@@ -18,10 +18,14 @@ Backend: Spring Boot
 Database: MySQL
 State Management: Redux
 UI Library: Ant Design && Mui
-# Link: https://appliancemanage.com/
-# Username: test1
-# Password: 12345678!
 
+## Test Info
+Link: https://appliancemanage.com/  
+Username: test1  
+Password: 12345678!  
+To Create Orders use stuff account or select store first  
+Stuff Account Username: test2  
+Password: 12345678!  
 
 
 # Getting Started with Create React App
