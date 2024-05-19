@@ -188,7 +188,7 @@ export default function Sales() {
         style={{ marginBottom: 16 }}
       />
       <Table
-        rowKey="invoiceNumber"
+        rowKey={(record) => `${record.invoiceNumber}-${record.id}`}
         columns={columns}
         dataSource={filteredData}
       />

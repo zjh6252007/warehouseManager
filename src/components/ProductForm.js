@@ -410,6 +410,7 @@ const ProductForm = ({handleClose}) =>{
             label="Delivery Date"
             width='70%'
             placeholder="deliveryDate"
+            rules={[{required:true}]}
             fieldProps={{
                 format: 'YYYY-MM-DD',
             }}

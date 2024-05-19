@@ -68,7 +68,7 @@ const Profile = () => {
 
       <Modal
         title="Change Password"
-        visible={isModalVisible}
+        open={isModalVisible}
         onCancel={handleCancel}
         footer={null}
       >

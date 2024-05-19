@@ -5,7 +5,8 @@ import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile } 
 import { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
-
+import InventoryToolbar from '../components/InventoryToolBar';
+import { deleteInventory } from '../redux/modules/inventory';
 const Inventory = () => {
   const userInfo = useSelector(state => state.user.userInfo);
   const dispatch = useDispatch();
@@ -14,7 +15,7 @@ const Inventory = () => {
   const { storeId } = useParams();
   const [selectedRows, setSelectedRows] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  
   useEffect(() => {
     if (isStorePage) {
       dispatch(getInventoryById(storeId));
@@ -83,12 +84,13 @@ const Inventory = () => {
   };
 
   const handleDelete = () => {
-    setSelectedRows([]);
+    dispatch(deleteInventory(selectedRows));
   };
 
   const inventoryData = useSelector(state => state.inventory.inventoryList);
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
+      <InventoryToolbar numSelected={selectedRows.length} onDelete={()=>handleDelete()} />
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
         {isStorePage && (
           <Button
@@ -114,7 +116,7 @@ const Inventory = () => {
         </Box>
       )}
       <DataGrid
-        rows={inventoryData}
+         rows={inventoryData.map(item => ({  ...item, id: item.id }))}
         columns={columns}
         initialState={{
           pagination: {
@@ -122,14 +124,14 @@ const Inventory = () => {
           },
         }}
         pageSize={18}
+        pageSizeOptions={[5, 10, 18, 25]}
         checkboxSelection
-        onSelectionModelChange={(newSelectionModel) => {
+        onRowSelectionModelChange={(newSelectionModel) => {
           const selectedIDs = new Set(newSelectionModel);
           const selectedItems = inventoryData.filter((row) =>
             selectedIDs.has(row.id) && row.status !== 'sold'
           ).map((row) => row.id);
           setSelectedRows(selectedItems);
-          console.log('Selected Rows:', selectedRows);
         }}
         isRowSelectable={(params) => params.row.status !== 'sold'}
       />
