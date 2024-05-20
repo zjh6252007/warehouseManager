@@ -7,6 +7,7 @@ import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
 import InventoryToolbar from '../components/InventoryToolBar';
 import { deleteInventory } from '../redux/modules/inventory';
+
 const Inventory = () => {
   const userInfo = useSelector(state => state.user.userInfo);
   const dispatch = useDispatch();
@@ -55,11 +56,19 @@ const Inventory = () => {
     { field: 'subcategory', headerName: 'Subcategory', width: 220 },
     {
       field: 'unitRetail', headerName: 'Unit Retail', width: 130,
-      renderCell: (params) => `$${params.value.toFixed(2)}`
+      renderCell: (params) => (
+        params.value !== undefined && !isNaN(params.value)
+          ? `$${params.value.toFixed(2)}`
+          : '$0.00'
+      )
     },
     {
       field: 'extRetail', headerName: 'Ext Retail', width: 130,
-      renderCell: (params) => `$${params.value.toFixed(2)}`
+      renderCell: (params) => (
+        params.value !== undefined && !isNaN(params.value)
+          ? `$${params.value.toFixed(2)}`
+          : '$0.00'
+      )
     },
     { field: 'product', headerName: 'Product', width: 150 }
   ];
@@ -67,7 +76,11 @@ const Inventory = () => {
   if (userInfo.role === 'admin') {
     columns.push({
       field: 'cost', headerName: 'Cost', width: 100,
-      renderCell: (params) => `$${params.value.toFixed(2)}`
+      renderCell: (params) => (
+        params.value !== undefined && !isNaN(params.value)
+          ? `$${params.value.toFixed(2)}`
+          : '$0.00'
+      )
     });
   }
 
@@ -88,6 +101,7 @@ const Inventory = () => {
   };
 
   const inventoryData = useSelector(state => state.inventory.inventoryList);
+
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       <InventoryToolbar numSelected={selectedRows.length} onDelete={()=>handleDelete()} />
@@ -116,7 +130,7 @@ const Inventory = () => {
         </Box>
       )}
       <DataGrid
-         rows={inventoryData.map(item => ({  ...item, id: item.id }))}
+        rows={inventoryData.map(item => ({ ...item, id: item.id }))}
         columns={columns}
         initialState={{
           pagination: {
