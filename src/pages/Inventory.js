@@ -92,6 +92,7 @@ const Inventory = () => {
       setLoading(false);
       if (res.code !== 0) {
         alert('File upload failed');
+        console.log(res.message);
       }
     }
   };
