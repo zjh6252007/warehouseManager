@@ -57,7 +57,7 @@ const Inventory = () => {
     {
       field: 'unitRetail', headerName: 'Unit Retail', width: 130,
       renderCell: (params) => (
-        params.value !== undefined && !isNaN(params.value)
+        params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
           : '$0.00'
       )
@@ -65,19 +65,19 @@ const Inventory = () => {
     {
       field: 'extRetail', headerName: 'Ext Retail', width: 130,
       renderCell: (params) => (
-        params.value !== undefined && !isNaN(params.value)
+        params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
           : '$0.00'
       )
     },
     { field: 'product', headerName: 'Product', width: 150 }
   ];
-
+  
   if (userInfo.role === 'admin') {
     columns.push({
       field: 'cost', headerName: 'Cost', width: 100,
       renderCell: (params) => (
-        params.value !== undefined && !isNaN(params.value)
+        params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
           : '$0.00'
       )
