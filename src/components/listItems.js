@@ -8,6 +8,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import StoreIcon from '@mui/icons-material/Store'
 import ProductForm from './ProductForm';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -132,7 +133,7 @@ export default function MainListItems({isShowStore,onItemClick}){
     
     {!isShowStore &&(<ListItemButton component={Link} to="/delivery" onClick={()=>onItemClick("delivery")} >
       <ListItemIcon>
-        <InventoryIcon />
+        <LocalShippingIcon />
       </ListItemIcon>
       <ListItemText primary="Delivery"  />
     </ListItemButton>
@@ -193,7 +194,7 @@ export default function MainListItems({isShowStore,onItemClick}){
     </ListItemButton>
     <ListItemButton component={Link} to={`/store/mystore/delivery/${store_id}`} onClick={()=>onItemClick("Delivery")}>
       <ListItemIcon>
-        <BarChartIcon />
+        <LocalShippingIcon />
       </ListItemIcon>
       <ListItemText primary="Delivery" />
     </ListItemButton>
