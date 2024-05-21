@@ -9,6 +9,7 @@ import StoreDetail from "../pages/StoreDetail";
 import Reports from "../pages/Reports";
 import Profile from "../pages/Profile";
 import StoreSetting from "../pages/StoreSetting";
+import Delivery from "../pages/Delivery";
 const router = createBrowserRouter([
     {
     path:"/",
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
             element:<Reports/>
         },
         {
+            path:"/delivery",
+            element:<Delivery/>
+        },
+        {
             path:"/store/mystore/:storeId",
             element:<StoreDetail/>
         },
@@ -53,6 +58,10 @@ const router = createBrowserRouter([
         {
             path:"/store/mystore/settings/:storeId",
             element:<StoreSetting/>
+        },
+        {
+            path:"/store/mystore/delivery/:storeId",
+            element:<Delivery/>
         }
     ]
     },

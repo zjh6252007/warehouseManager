@@ -10,21 +10,33 @@ import { getInventory,getInventoryById } from '../redux/modules/inventory';
 import { postSales } from '../redux/modules/sales';
 import { clearCart } from '../redux/modules/cart';
 import moment from 'moment';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import { fetchStoreDetail } from '../redux/modules/myStore';
 const ProductForm = ({handleClose}) =>{
     const dispatch = useDispatch();
     const location = useLocation();
     const isStorePage = location.pathname.includes('/mystore');
-    const store_info = useSelector(state=>state.myStore.currentStore);
+    const {storeId} = useParams();
     const user_info = useSelector(state=>state.user.userInfo);
 
-    useEffect(()=>{
-    if(isStorePage){
-        dispatch(getInventoryById(store_info.id));
-    }else{
-      dispatch(getInventory())};
-    },[dispatch,isStorePage,store_info.id])
-    
+    useEffect(() => {
+        if (isStorePage) {
+            dispatch(fetchStoreDetail(storeId));
+        } else {
+            dispatch(fetchStoreDetail(user_info.storeId));
+        }
+    }, [dispatch, isStorePage, storeId, user_info.storeId]);
+
+    const store_info = useSelector(state=>state.myStore.currentStore);
+    useEffect(() => {
+        if (store_info && store_info.id) {
+            if (isStorePage) {
+                dispatch(getInventoryById(store_info.id));
+            } else {
+                dispatch(getInventory());
+            }
+        }
+    }, [dispatch, isStorePage, store_info]);
 
     const inventoryList = useSelector(state=>state.inventory.inventoryList);
     const formRef = useRef();

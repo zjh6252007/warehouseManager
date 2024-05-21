@@ -105,7 +105,7 @@ const Inventory = () => {
 
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
-      <InventoryToolbar numSelected={selectedRows.length} onDelete={()=>handleDelete()} />
+      {userInfo.role === 'admin' &&(<InventoryToolbar numSelected={selectedRows.length} onDelete={()=>handleDelete()} />)}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
         {isStorePage && (
           <Button
@@ -123,7 +123,7 @@ const Inventory = () => {
           </Button>
         )}
       </Box>
-      {selectedRows.length > 0 && (
+      {selectedRows.length > 0 && userInfo.role === 'admin' &&(
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
           <Button variant="contained" color="error" onClick={handleDelete}>
             Delete Selected

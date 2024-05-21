@@ -52,7 +52,7 @@ export default function MainListItems({isShowStore,onItemClick}){
   const currentItems = cartInfo.slice(indexOfFirstItem, indexOfLastItem);
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
-  
+  const [loading, setLoading] = useState(false);
   return (
   <React.Fragment>
 
@@ -130,6 +130,14 @@ export default function MainListItems({isShowStore,onItemClick}){
       <ListItemText primary="Inventory"  />
     </ListItemButton>
     
+    {!isShowStore &&(<ListItemButton component={Link} to="/delivery" onClick={()=>onItemClick("delivery")} >
+      <ListItemIcon>
+        <InventoryIcon />
+      </ListItemIcon>
+      <ListItemText primary="Delivery"  />
+    </ListItemButton>
+    )}
+
     {isShowStore &&(
     <ListItemButton component={Link} to = {`/reports`} onClick={()=>onItemClick("Reports")}>
     <ListItemIcon>
@@ -177,12 +185,17 @@ export default function MainListItems({isShowStore,onItemClick}){
       <ListItemText primary="Store Inventory"  />
     </ListItemButton>
 
-
     <ListItemButton component={Link} to={`/store/mystore/sales/${store_id}`} onClick={()=>onItemClick("Sales")}>
       <ListItemIcon>
         <BarChartIcon />
       </ListItemIcon>
       <ListItemText primary="Sales" />
+    </ListItemButton>
+    <ListItemButton component={Link} to={`/store/mystore/delivery/${store_id}`} onClick={()=>onItemClick("Delivery")}>
+      <ListItemIcon>
+        <BarChartIcon />
+      </ListItemIcon>
+      <ListItemText primary="Delivery" />
     </ListItemButton>
 
     <ListItemButton component={Link} to = {`/store/mystore/sales/reports/${store_id}`} onClick={()=>onItemClick("Reports")}>
