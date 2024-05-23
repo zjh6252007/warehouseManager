@@ -130,6 +130,20 @@ const Delivery = () => {
       dataIndex: 'applianceNum',
     },
     {
+      title: 'Detailes',
+      key: 'salesTypes',
+      dataIndex: 'salesTypes',
+      render: (salesTypes) => (
+        <div>
+        {salesTypes
+            .filter(type => type !== 'Accessory')
+            .map((type, index) => (
+              <div key={index}>{type}</div>
+            ))}
+        </div>
+      )
+    },
+    {
       title: 'Note',
       key: 'note',
       dataIndex: 'note',
