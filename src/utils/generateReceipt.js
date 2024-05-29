@@ -1,10 +1,37 @@
 import jsPDF from "jspdf"
+import QRCode from "qrcode";
+const getBase64ImageFromURL = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const dataURL = canvas.toDataURL('image/png');
+        resolve(dataURL);
+      };
+      img.onerror = (error) => reject(error);
+      img.src = url;
+    });
+  };
 
-const generateReceipt = (orderInfo,companyInfo) =>{
+  const generateQRCode = (text) => {
+    return new Promise((resolve, reject) => {
+      QRCode.toDataURL(text, { errorCorrectionLevel: 'H' }, (err, url) => {
+        if (err) reject(err);
+        else resolve(url);
+      });
+    });
+  };
+
+  
+const generateReceipt = async(orderInfo,companyInfo) =>{
 const pdf= new jsPDF();
 const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items} = orderInfo;
-
-const {address:storeAddress,phone,storeName} = companyInfo;
+const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     const formattedDate = createdAt.split("T")[0];  
     const totalPages = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
@@ -51,7 +78,7 @@ const {address:storeAddress,phone,storeName} = companyInfo;
     pdf.text("Model",18,83);
     pdf.text("Serial Number",45,83);
     pdf.text("Type",85,83);
-    pdf.text("Product Price",110,83);
+    pdf.text("Product Price",112,83);
     pdf.text("Warranty",145,83);
     pdf.text("Warranty Price",175,83);
 
@@ -61,8 +88,8 @@ const {address:storeAddress,phone,storeName} = companyInfo;
     items.forEach(item=>{
         pdf.text(item.model,18,datacolum);
         pdf.text(`${item.serialNumber||"N/A"}`,45,datacolum);
-        pdf.text(item.type,85,datacolum);
-        pdf.text(`$${item.price}`,110,datacolum);
+        pdf.text(item.type,82,datacolum);
+        pdf.text(`$${item.price}`,115,datacolum);
         pdf.text(`${item.warranty} Years`,145,datacolum);
         pdf.text(`$${item.warrantyPrice}`,175,datacolum);
         datacolum += 5;
@@ -72,11 +99,33 @@ const {address:storeAddress,phone,storeName} = companyInfo;
     
     pdf.setFontSize(14);
     pdf.text(`Tax:$${totalTax.toFixed(2)}`,159.5,datacolum += 15);
+
+    const imgData = await getBase64ImageFromURL('/google_review.png');
+    pdf.addImage(imgData, 'PNG', 18, datacolum, 25, 25); 
+
+    if(qrcode !== null){
+    const qrCodeData = await generateQRCode(qrcode);
+    pdf.addImage(qrCodeData, 'PNG', 55, datacolum, 28, 28); // Adjust the position and size as needed
+    }
+    
     pdf.setFontSize(16);
     pdf.setTextColor("#1fd655")
     pdf.text(`Total: $${total.toFixed(2)}`, pdf.internal.pageSize.width - pdf.getStringUnitWidth("TOTAL") * 5 - 35, datacolum += 9 );
 
+    
+    pdf.setFontSize(8);
+    pdf.setTextColor(70);
+    pdf.text(`TYPE1: Scratch and Dent Goods: Warranty within 30 Days After Purchase:After 30 days: - Above delivery and service fees are not refundable. `,18,datacolum += 30)
+    pdf.text('For reasons other than functional issues, customers are responsible for sending appliances back to the store by themselves. After the goods',18,datacolum += 7)
+    pdf.text("are received, the payment will be refunded according to the customer's payment method (if customer need merchant pick up the returned goods at home,",18,datacolum += 7)
+    pdf.text(", additional shipping fees will be charged). Customers are responsible for any service fee / processing fee that may occur during the refund.",18,datacolum += 7)
+    pdf.text(" - Within the 30 days of purchase, please get in touch with the store if anything. When initialing a claim, please have the following information ready:  ",18,datacolum += 7)
+    pdf.text("1. Invoice/Receipt from the store as Proof of Purchase",18,datacolum += 7);
+    pdf.text("2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)",18,datacolum+=7);
+    pdf.text("Each service request is subject to a $99 deductible. And service includes parts, service, and labor.",18,datacolum+=7);
 
+    
+  
     const pdfBlob = pdf.output('blob');
     window.open(URL.createObjectURL(pdfBlob), '_blank');
 

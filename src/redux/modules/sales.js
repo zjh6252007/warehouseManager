@@ -107,6 +107,16 @@ const getAllSalesByRange =(date) =>async(dispatch) =>{
         console.log(error)
     }
 }
-export {postSales,getSalesByStoreId,deleteSales,getSalesByDate,returnSales,getAllSales,getAllSalesByRange,clearSalesList}
+
+const addAccessory = (data,storeId) =>async(dispatch) =>{
+    try{
+        const res = await request.post('/api/sales/addAccessory',data);
+        dispatch(getSalesByStoreId(storeId));
+        return res;
+    }catch(error){
+        console.log(error);
+    }
+}
+export {postSales,getSalesByStoreId,deleteSales,getSalesByDate,returnSales,getAllSales,getAllSalesByRange,clearSalesList,addAccessory}
 const salesReducer = sales.reducer;
 export default salesReducer;

@@ -78,7 +78,7 @@ const Reports = () => {
   
   
   const costData = inventory.reduce((cost, inventory) => {
-    return cost + (inventory.cost || 0);
+    return cost + (inventory.status === 'inStock' ? inventory.cost:0);
   }, 0);
 
   const totalTax = salesData.reduce((total,sale)=>{
@@ -112,7 +112,6 @@ const Reports = () => {
   }));
 
   const { RangePicker } = DatePicker;
-
   return (
     <div>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, Space, Modal, Input, Button } from 'antd';
+import { Table, Space, Modal, Input, Button, Form } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { getSalesByStoreId, deleteSales, getAllSales, returnSales } from '../redux/modules/sales';
@@ -10,13 +10,14 @@ import { useLocation, useParams } from 'react-router-dom';
 import ReturnModalContent from '../components/ReturnModalContent';
 import { clearSalesList } from '../redux/modules/sales';
 import { generateDeliveryOrder } from '../utils/generateDeliveryOrder';
+import { addAccessory } from '../redux/modules/sales';
 export default function Sales() {
   const dispatch = useDispatch();
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
 
   useEffect(() => {
-    dispatch(clearSalesList())
+    dispatch(clearSalesList());
     dispatch(getUserInfo());
   }, [dispatch]);
 
@@ -53,6 +54,9 @@ export default function Sales() {
   const [returnList, setReturnList] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
+  const [openAccessory, setOpenAccessory] = useState(false);
+  const [accessoryName, setAccessoryName] = useState("");
+  const [accessoryPrice, setAccessoryPrice] = useState("");
 
   const aggregatedData = React.useMemo(() => {
     const groupedData = {};
@@ -102,13 +106,23 @@ export default function Sales() {
     setOpen(false);
   };
 
+  const handleOpenAccessory = (record) => {
+    setSelectedRecord(record);
+    setOpenAccessory(true);
+  };
+
+  const handleCloseAccessory = () => {
+    setOpenAccessory(false);
+  };
+
   const handleReceipt = (record, storeInfo) => {
     generateReceipt(record, storeInfo);
   };
 
-  const handleDeliverOrder = (record,storeInfo) =>{
-    generateDeliveryOrder(record,storeInfo);
-  }
+  const handleDeliverOrder = (record, storeInfo) => {
+    generateDeliveryOrder(record, storeInfo);
+  };
+
   const handleReturnItems = (selectedItems) => {
     if (storeId) {
       dispatch(returnSales(selectedItems, storeId));
@@ -124,6 +138,18 @@ export default function Sales() {
         dispatch(getSalesByStoreId(storeId));
         handleClose();
       });
+  };
+
+  const handleAddAccessory = () => {
+    const accessoryDTO = {
+      storeId:selectedRecord.store.id,
+      invoiceNumber:selectedRecord.invoiceNumber,
+      price:accessoryPrice,
+      model:accessoryName
+    };
+    console.log(accessoryDTO);
+    dispatch(addAccessory(accessoryDTO,selectedRecord.store.id));
+    handleCloseAccessory();
   };
 
   const columns = [
@@ -164,19 +190,19 @@ export default function Sales() {
       key: 'total',
       render: (text) => `$${parseFloat(text).toFixed(2)}`
     },
-    ...(isStorePage||userInfo.role === 'user'?[{
-        title: 'Modify Order',
-        dataIndex: '',
-        key: 'x',
-        render: (_, record) => (
-          <Space size="middle">
-            <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
-            <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
-            <Button type="link" onClick={() => handleReceipt(record, storeInfo)}>Receipt</Button>
-            <Button type="link" onClick={() => handleDeliverOrder(record, storeInfo)}>Delivery Info</Button>
-          </Space>
-        )
-    }]:[])
+    ...(isStorePage || userInfo.role === 'user' ? [{
+      title: 'Modify Order',
+      dataIndex: '',
+      key: 'x',
+      render: (_, record) => (
+        <Space size="middle">
+          <Button type="link" onClick={() => handleOpenAccessory(record)}>Add Accessory</Button>
+          <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
+          <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
+          <Button type="link" onClick={() => handleReceipt(record, storeInfo)}>Receipt</Button>
+        </Space>
+      )
+    }] : [])
   ];
 
   return (
@@ -212,6 +238,30 @@ export default function Sales() {
         footer={null}
       >
         <ReturnModalContent items={returnList} onReturn={handleReturnItems} />
+      </Modal>
+
+      <Modal
+        title="Add Accessory"
+        open={openAccessory}
+        onCancel={handleCloseAccessory}
+        destroyOnClose
+        onOk={handleAddAccessory}
+      >
+        <Form>
+          <Form.Item label="Accessory Name" required>
+            <Input
+              value={accessoryName}
+              onChange={e => setAccessoryName(e.target.value)}
+            />
+          </Form.Item>
+          <Form.Item label="Price" required>
+            <Input
+              type="number"
+              value={accessoryPrice}
+              onChange={e => setAccessoryPrice(e.target.value)}
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );
