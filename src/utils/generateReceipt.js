@@ -43,6 +43,14 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
         });
     }
 
+    const imgData = await getBase64ImageFromURL('/google_review.png');
+    pdf.addImage(imgData, 'PNG', 100, 10, 25, 25); 
+
+    if(qrcode !== null){
+    const qrCodeData = await generateQRCode(qrcode);
+    pdf.addImage(qrCodeData, 'PNG', 130, 10, 25, 25); // Adjust the position and size as needed
+    }
+
     pdf.setTextColor(70);
     pdf.setFontSize(16);
     pdf.text(storeName||" ",20,20);
@@ -95,23 +103,37 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
         datacolum += 5;
     })
 
+    datacolum += 15;
+    pdf.setLineWidth(0.5)
+    pdf.setDrawColor("#808080");
+    pdf.line(10,datacolum,200,datacolum);
+    pdf.text("NOTE",15,datacolum += 5);
+    datacolum -= 5;
+    pdf.line(10,datacolum,10,datacolum+=45);
+    datacolum -= 45;
+    pdf.line(200,datacolum,200,datacolum+=45);
+    datacolum -= 45;
+    pdf.line(100,datacolum,100,datacolum+=45);
+    datacolum -= 45;
+    pdf.text("PAYMENT TYPE",109,datacolum += 5);
+    datacolum -= 5;
 
+    pdf.text("Cash",113,datacolum += 10);
+    pdf.text("Card",113,datacolum += 7);
+    pdf.text("Check",113,datacolum += 7);
+    pdf.text("Achima",113,datacolum += 7);
+    pdf.text("Snap",113,datacolum += 7);
+
+    datacolum -= 38;
+
+    pdf.text(`SUBTOTAL:$${(total-totalTax).toFixed(2)}`,145,datacolum += 10);
+    pdf.text(`TAX:$${totalTax.toFixed(2)}`,145,datacolum += 7);
+    pdf.text(`Total: $${total.toFixed(2)}`,145,datacolum += 10);
+    datacolum -= 27;
     
+    pdf.line(140,datacolum,140,datacolum+=45);
+    pdf.line(10,datacolum,200,datacolum);
     pdf.setFontSize(14);
-    pdf.text(`Tax:$${totalTax.toFixed(2)}`,159.5,datacolum += 15);
-
-    const imgData = await getBase64ImageFromURL('/google_review.png');
-    pdf.addImage(imgData, 'PNG', 18, datacolum, 25, 25); 
-
-    if(qrcode !== null){
-    const qrCodeData = await generateQRCode(qrcode);
-    pdf.addImage(qrCodeData, 'PNG', 55, datacolum, 28, 28); // Adjust the position and size as needed
-    }
-    
-    pdf.setFontSize(16);
-    pdf.setTextColor("#1fd655")
-    pdf.text(`Total: $${total.toFixed(2)}`, pdf.internal.pageSize.width - pdf.getStringUnitWidth("TOTAL") * 5 - 35, datacolum += 9 );
-
     
     pdf.setFontSize(8);
     pdf.setTextColor(70);
@@ -124,6 +146,8 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.text("2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)",18,datacolum+=7);
     pdf.text("Each service request is subject to a $99 deductible. And service includes parts, service, and labor.",18,datacolum+=7);
 
+    pdf.setFontSize(10);
+    pdf.text("Customer Signature:_____________",145,datacolum += 15);
     
   
     const pdfBlob = pdf.output('blob');
