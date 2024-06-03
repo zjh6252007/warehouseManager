@@ -145,7 +145,7 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.text("1. Invoice/Receipt from the store as Proof of Purchase",18,datacolum += 7);
     pdf.text("2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)",18,datacolum+=7);
     pdf.text("Each service request is subject to a $99 deductible. And service includes parts, service, and labor.",18,datacolum+=7);
-
+    pdf.text("99$ Fee charged only due to failure of accessories and not due to failure of product.",18,datacolum+=7)
     pdf.setFontSize(10);
     pdf.text("Customer Signature:_____________",145,datacolum += 15);
     
