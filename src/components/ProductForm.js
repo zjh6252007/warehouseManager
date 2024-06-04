@@ -59,6 +59,7 @@ const ProductForm = ({handleClose}) =>{
     });
     const [customerData, setCustomerData] = useState({});
     const [selectedModel, setSelectedModel] = useState(null);
+    const [taxRate, setTaxRate] = useState(null);
 
     const handleModelChange = (value) => {
         const relatedItems = inventoryList.filter(item => item.model === value && item.status!== 'sold');
@@ -134,15 +135,16 @@ const ProductForm = ({handleClose}) =>{
     }
     const cartList = useSelector(state=>state.cart.cartList);
 
-    const calculateTotalPrice=(customer,cart)=>{
+    const calculateTotalPrice=(customer,cart,taxRate)=>{
         let totalPrice = cart.reduce((total,item)=>{
             let itemTotal = parseFloat(item.price);
             if(item.extendedwarranty > 0 && item.warrantyPrice && !isNaN(parseFloat(item.warrantyPrice))){
                 itemTotal += parseFloat(item.warrantyPrice);
                 itemTotal += parseFloat(item.deliveryFee);
             }
+            const _taxRate = taxRate||store_info.taxRate;
             if(store_info.tax){
-                itemTotal += (item.price * store_info.taxRate*0.01)
+                itemTotal += (item.price * _taxRate * 0.01)
             }
             return total + itemTotal;
         },0);
@@ -151,7 +153,9 @@ const ProductForm = ({handleClose}) =>{
         }
         return totalPrice;
     }
-    const renderProductDescriptions = (item) => (
+    const renderProductDescriptions = (item,taxRate) => {
+        const _taxRate = taxRate || store_info.tax;
+        return(
         <Descriptions bordered>
             <Descriptions.Item label="Model">{item.model}</Descriptions.Item>
             <Descriptions.Item label="Product Type">{item.type}</Descriptions.Item>
@@ -160,15 +164,16 @@ const ProductForm = ({handleClose}) =>{
             <Descriptions.Item label="Extended Warranty">{item.extendedwarranty ? `${item.extendedwarranty} Years` : 'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Warranty Price">{item.warrantyPrice ? `$${item.warrantyPrice * item.extendedwarranty}` : 'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Serial Number" span={1}>{item.serialNumber}</Descriptions.Item>
-            {store_info.tax &&(
-            <Descriptions.Item label="Tax">${(item.price * store_info.taxRate*0.01).toFixed(2)}</Descriptions.Item>
+            {_taxRate &&(
+            <Descriptions.Item label="Tax">${(item.price * _taxRate*0.01).toFixed(2)}</Descriptions.Item>
             )
             }
         </Descriptions>
-    );
+        )
+    };
 
     const renderOtherDescriptions = (customer,cart) =>{
-        const totalPrice = calculateTotalPrice(customer,cart);
+        const totalPrice = calculateTotalPrice(customer,cart,taxRate);
         return(
         <Descriptions bordered style={{marginBottom:15}}>
             <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
@@ -212,7 +217,7 @@ const ProductForm = ({handleClose}) =>{
                         salesperson: customerData.sales,
                         warranty: (Number(item.freewarranty)||0) + (Number(item.extendedwarranty)||0),
                         warrantyPrice: (item.warrantyPrice||0) * (Number(item.extendedwarranty)||0),
-                        taxes:store_info.tax?(item.price*store_info.taxRate*0.01):0,
+                        taxes: (taxRate !== null ? (item.price * taxRate * 0.01) : (store_info.tax ? (item.price * store_info.taxRate * 0.01) : 0)),
                         deliveryFee:customerData.deliveryFee,
                         deliveryDate: customerData.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null
                     }))
@@ -440,6 +445,19 @@ const ProductForm = ({handleClose}) =>{
         />
     </ProForm.Group>
 
+    <ProFormText
+            name="tax_rate"
+            label="Tax Rate"
+            width='50%'
+            placeholder="tax"
+            value = {taxRate}
+            initialValue={0}
+            fieldProps={{
+                addonBefore:'%',
+                type:'number',
+                onChange:(e)=>setTaxRate(e.target.value)
+            }}
+        />
         </StepsForm.StepForm>
 
 
@@ -449,10 +467,10 @@ const ProductForm = ({handleClose}) =>{
             >
         {cartList.map((item,id)=>(
             <div key={id} style={{marginBottom:12}}>
-                {item.type === 'Accessory'?'':renderProductDescriptions(item)}
+                {item.type === 'Accessory'?'':renderProductDescriptions(item,taxRate)}
             </div>
         ))}
-        {renderOtherDescriptions(customerData,cartList)}
+        {renderOtherDescriptions(customerData,cartList,taxRate)}
         </StepsForm.StepForm>
         </StepsForm>
     </>
