@@ -44,8 +44,9 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     }
 
     const imgData = await getBase64ImageFromURL('/google_review.png');
+    const logo = await getBase64ImageFromURL('/wlAppliance.png');
     pdf.addImage(imgData, 'PNG', 100, 10, 25, 25); 
-
+    pdf.addImage(logo,'PNG',0,0,15,15)
     if(qrcode !== null){
     const qrCodeData = await generateQRCode(qrcode);
     pdf.addImage(qrCodeData, 'PNG', 130, 10, 25, 25); // Adjust the position and size as needed
