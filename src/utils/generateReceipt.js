@@ -60,11 +60,11 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.text(phone||" ",20,35);
 
     pdf.setFontSize(16);
-    pdf.text("RECEIPT", 165,20);
+    pdf.text("RECEIPT", 160,20);
     pdf.setFontSize(10);
-    pdf.text(`Invoice:#${invoiceNumber}`,165,28);
-    pdf.text(`Sales:${salesperson||''}`,165,32);
-    pdf.text(`Order Date:${formattedDate}`,165,36);
+    pdf.text(`Invoice:#${invoiceNumber}`,160,28);
+    pdf.text(`Sales:${salesperson||''}`,160,32);
+    pdf.text(`Order Date:${formattedDate}`,160,36);
     pdf.setLineWidth(1)
     pdf.setDrawColor("#808080");
     pdf.line(0,40,250,40);
@@ -91,7 +91,7 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.text("Type",85,83);
     pdf.text("Product Price",112,83);
     pdf.text("Warranty",145,83);
-    pdf.text("Warranty Price",175,83);
+    pdf.text("Warranty Price",170,83);
 
     let datacolum = 90;
 
@@ -102,7 +102,7 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
         pdf.text(item.type,82,datacolum);
         pdf.text(`$${item.price}`,115,datacolum);
         pdf.text(`${item.warranty} Years`,145,datacolum);
-        pdf.text(`$${item.warrantyPrice}`,175,datacolum);
+        pdf.text(`$${item.warrantyPrice}`,170,datacolum);
         datacolum += 5;
     })
 
@@ -146,9 +146,10 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.setTextColor(70);
     pdf.text(`TYPE1: Scratch and Dent Goods: Warranty within 30 Days After Purchase:After 30 days: - Above delivery and service fees are not refundable. `,18,datacolum += 30)
     pdf.text('For reasons other than functional issues, customers are responsible for sending appliances back to the store by themselves. After the goods',18,datacolum += 5)
-    pdf.text("are received, the payment will be refunded according to the customer's payment method (if customer need merchant pick up the returned goods at home,",18,datacolum += 5)
-    pdf.text("additional shipping fees will be charged). Customers are responsible for any service fee / processing fee that may occur during the refund.",18,datacolum += 5)
-    pdf.text(" - Within the 30 days of purchase, please get in touch with the store if anything. When initialing a claim, please have the following information ready:  ",18,datacolum += 5)
+    pdf.text("are received, the payment will be refunded according to the customer's payment method (if customer need merchant pick up the returned",18,datacolum += 5)
+    pdf.text("goods at home, additional shipping fees will be charged). Customers are responsible for any service fee / processing fee that may occur during",18,datacolum += 5)
+    pdf.text("the refund. - Within the 30 days of purchase, please get in touch with the store if anything. When initialing a claim, please have the",18,datacolum += 5)
+    pdf.text("following information ready:  ",18,datacolum+=5);
     pdf.text("1. Invoice/Receipt from the store as Proof of Purchase",18,datacolum += 5);
     pdf.text("2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)",18,datacolum+=5);
     pdf.text("Each service request is subject to a $99 deductible. And service includes parts, service, and labor.",18,datacolum+=5);
