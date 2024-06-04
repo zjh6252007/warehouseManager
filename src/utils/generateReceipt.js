@@ -111,7 +111,7 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.setDrawColor("#808080");
     pdf.line(10,datacolum,200,datacolum);
     pdf.text("NOTE",15,datacolum += 5);
-    const noteLines = pdf.splitTextToSize(note,75);
+    const noteLines = pdf.splitTextToSize(note||"",75);
     let currentLineY = datacolum + 4;
     for(const line of noteLines){
         pdf.text(line,14,currentLineY)
