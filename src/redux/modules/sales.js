@@ -117,6 +117,16 @@ const addAccessory = (data,storeId) =>async(dispatch) =>{
         console.log(error);
     }
 }
-export {postSales,getSalesByStoreId,deleteSales,getSalesByDate,returnSales,getAllSales,getAllSalesByRange,clearSalesList,addAccessory}
+
+const setReceipt = (data,storeId) =>async(dispatch) =>{
+    try{
+        const res = await request.post('/api/sales/generateReceipt',data);
+        dispatch(getSalesByStoreId(storeId));
+        return res;
+    }catch(error){
+        console.log(error);
+    }
+}
+export {postSales,getSalesByStoreId,deleteSales,getSalesByDate,returnSales,getAllSales,getAllSalesByRange,clearSalesList,addAccessory,setReceipt}
 const salesReducer = sales.reducer;
 export default salesReducer;

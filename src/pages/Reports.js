@@ -54,8 +54,8 @@ const Reports = () => {
   const salesData = useSelector(state => state.sales.salesData);
   
   const totalSales = salesData.reduce((acc, sale) => {
-    const { invoiceNumber, price, warrantyPrice, deliveryFee, storeId } = sale;
-    acc.total += (price || 0) + (warrantyPrice || 0);
+    const { invoiceNumber, price, warrantyPrice, deliveryFee, storeId, discount } = sale;
+    acc.total += (price || 0) + (warrantyPrice || 0) - (discount || 0) ;
     const invoiceKey = `${invoiceNumber}-${storeId}`;
     if (!acc.invoices.has(invoiceKey)) {
       acc.total += deliveryFee || 0;
@@ -91,7 +91,7 @@ const Reports = () => {
     }
     const inventoryItem = inventory.find(item => item.sku === sale.serialNumber);
     if (inventoryItem) {
-      const profit = (sale.price || 0) - (inventoryItem.cost || 0) - (sale.taxes||0);
+      const profit = (sale.price || 0) - (inventoryItem.cost || 0) - (sale.taxes||0) - (sale.discount || 0);
       return total + profit;
     }
     return total;

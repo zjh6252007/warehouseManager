@@ -30,7 +30,7 @@ const getBase64ImageFromURL = (url) => {
   
 const generateReceipt = async(orderInfo,companyInfo) =>{
 const pdf= new jsPDF();
-const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items} = orderInfo;
+const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items,paymentType,installationFee,discount,note,subtotal} = orderInfo;
 const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     const formattedDate = createdAt.split("T")[0];  
     const totalPages = pdf.internal.getNumberOfPages();
@@ -81,7 +81,9 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
         }else{
             pdf.text(`Delivery Date: N/A`,130,63);
         }
+    const installationFees = installationFee || 0; 
     pdf.text(`Delivery Fee: $${items[0].deliveryFee||'0'}`,130,68)
+    pdf.text(`Installation Fee: $${installationFee||'0'}`,130,73)
     pdf.setFontSize(13);
     pdf.text("Model",18,83);
     pdf.text("Serial Number",45,83);
@@ -108,6 +110,13 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.setDrawColor("#808080");
     pdf.line(10,datacolum,200,datacolum);
     pdf.text("NOTE",15,datacolum += 5);
+    const noteLines = pdf.splitTextToSize(note,75);
+    let currentLineY = datacolum + 4;
+    for(const line of noteLines){
+        pdf.text(line,14,currentLineY)
+        currentLineY += 3;
+    }
+    
     datacolum -= 5;
     pdf.line(10,datacolum,10,datacolum+=45);
     datacolum -= 45;
@@ -118,18 +127,15 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.text("PAYMENT TYPE",109,datacolum += 5);
     datacolum -= 5;
 
-    pdf.text("Cash",113,datacolum += 10);
-    pdf.text("Card",113,datacolum += 7);
-    pdf.text("Check",113,datacolum += 7);
-    pdf.text("Achima",113,datacolum += 7);
-    pdf.text("Snap",113,datacolum += 7);
+    pdf.text(paymentType||"",113,datacolum += 10);
 
-    datacolum -= 38;
+    datacolum -= 10;
 
-    pdf.text(`SUBTOTAL:$${(total-totalTax).toFixed(2)}`,145,datacolum += 10);
+    pdf.text(`SUBTOTAL:$${subtotal.toFixed(2)}`,145,datacolum += 5);
     pdf.text(`TAX:$${totalTax.toFixed(2)}`,145,datacolum += 7);
+    pdf.text(`Discount:$${discount||0}`,145,datacolum+= 7);
     pdf.text(`Total: $${total.toFixed(2)}`,145,datacolum += 10);
-    datacolum -= 27;
+    datacolum -= 29;
     
     pdf.line(140,datacolum,140,datacolum+=45);
     pdf.line(10,datacolum,200,datacolum);
@@ -138,14 +144,14 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.setFontSize(8);
     pdf.setTextColor(70);
     pdf.text(`TYPE1: Scratch and Dent Goods: Warranty within 30 Days After Purchase:After 30 days: - Above delivery and service fees are not refundable. `,18,datacolum += 30)
-    pdf.text('For reasons other than functional issues, customers are responsible for sending appliances back to the store by themselves. After the goods',18,datacolum += 7)
-    pdf.text("are received, the payment will be refunded according to the customer's payment method (if customer need merchant pick up the returned goods at home,",18,datacolum += 7)
-    pdf.text(", additional shipping fees will be charged). Customers are responsible for any service fee / processing fee that may occur during the refund.",18,datacolum += 7)
-    pdf.text(" - Within the 30 days of purchase, please get in touch with the store if anything. When initialing a claim, please have the following information ready:  ",18,datacolum += 7)
-    pdf.text("1. Invoice/Receipt from the store as Proof of Purchase",18,datacolum += 7);
-    pdf.text("2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)",18,datacolum+=7);
-    pdf.text("Each service request is subject to a $99 deductible. And service includes parts, service, and labor.",18,datacolum+=7);
-    pdf.text("99$ Fee charged only due to failure of accessories and not due to failure of product.",18,datacolum+=7)
+    pdf.text('For reasons other than functional issues, customers are responsible for sending appliances back to the store by themselves. After the goods',18,datacolum += 5)
+    pdf.text("are received, the payment will be refunded according to the customer's payment method (if customer need merchant pick up the returned goods at home,",18,datacolum += 5)
+    pdf.text(", additional shipping fees will be charged). Customers are responsible for any service fee / processing fee that may occur during the refund.",18,datacolum += 5)
+    pdf.text(" - Within the 30 days of purchase, please get in touch with the store if anything. When initialing a claim, please have the following information ready:  ",18,datacolum += 5)
+    pdf.text("1. Invoice/Receipt from the store as Proof of Purchase",18,datacolum += 5);
+    pdf.text("2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)",18,datacolum+=5);
+    pdf.text("Each service request is subject to a $99 deductible. And service includes parts, service, and labor.",18,datacolum+=5);
+    pdf.text("99$ Fee charged only due to failure of accessories and not due to failure of product.",18,datacolum+=5)
     pdf.setFontSize(10);
     pdf.text("Customer Signature:_____________",145,datacolum += 15);
     

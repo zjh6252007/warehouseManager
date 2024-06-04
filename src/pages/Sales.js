@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, Space, Modal, Input, Button, Form } from 'antd';
+import { Table, Space, Modal, Input, Button, Form, Checkbox, Select } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { getSalesByStoreId, deleteSales, getAllSales, returnSales } from '../redux/modules/sales';
@@ -10,7 +10,11 @@ import { useLocation, useParams } from 'react-router-dom';
 import ReturnModalContent from '../components/ReturnModalContent';
 import { clearSalesList } from '../redux/modules/sales';
 import { generateDeliveryOrder } from '../utils/generateDeliveryOrder';
-import { addAccessory } from '../redux/modules/sales';
+import { addAccessory,setReceipt} from '../redux/modules/sales';
+import store from '../redux/store';
+
+const { Option } = Select;
+
 export default function Sales() {
   const dispatch = useDispatch();
   const location = useLocation();
@@ -58,17 +62,28 @@ export default function Sales() {
   const [accessoryName, setAccessoryName] = useState("");
   const [accessoryPrice, setAccessoryPrice] = useState("");
 
+
+  const [openReceiptModal, setOpenReceiptModal] = useState(false);
+  const [paymentType, setPaymentType] = useState('');
+  const [includeInstallation, setIncludeInstallation] = useState(false);
+  const [installationFee, setInstallationFee] = useState('');
+  const [discount,setDiscount] = useState('');
+  const [note,setNote] = useState('');
+
   const aggregatedData = React.useMemo(() => {
     const groupedData = {};
     if (salesInfo) {
       salesInfo.forEach((item) => {
         const key = `${item.store.id}-${item.invoiceNumber}`;
         if (!groupedData[key]) {
-          groupedData[key] = { ...item, total: 0, totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0 };
+          groupedData[key] = { ...item, total: 0, subtotal:0,totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0 };
         }
+        groupedData[key].subtotal += item.price;
         groupedData[key].total += item.price;
         groupedData[key].total += item.warrantyPrice;
         groupedData[key].total += item.taxes || 0;
+        groupedData[key].total -= item.discount || 0;
+        groupedData[key].total += item.installationFee || 0;
         groupedData[key].totalTax += item.taxes || 0;
         groupedData[key].items.push(item);
       });
@@ -115,12 +130,35 @@ export default function Sales() {
     setOpenAccessory(false);
   };
 
+  const handleOpenReceiptModal = (record) => {
+    setSelectedRecord(record);
+    setOpenReceiptModal(true);
+  };
+
+  const handleCloseReceiptModal = () => {
+    setOpenReceiptModal(false);
+    setPaymentType('');
+    setIncludeInstallation(false);
+    setInstallationFee('');
+  };
+
   const handleReceipt = (record, storeInfo) => {
+    console.log(record)
     generateReceipt(record, storeInfo);
   };
 
-  const handleDeliverOrder = (record, storeInfo) => {
-    generateDeliveryOrder(record, storeInfo);
+  const handleGenerateReceipt = () => {
+    const installationDiscountDTO = {
+      installation:includeInstallation,
+      paymentType:paymentType,
+      discount:discount,
+      installationFee:installationFee,
+      note:note,
+      storeId:selectedRecord.store.id,
+      invoiceNumber:selectedRecord.invoiceNumber
+    };
+    dispatch(setReceipt(installationDiscountDTO,selectedRecord.store.id))
+    handleCloseReceiptModal();
   };
 
   const handleReturnItems = (selectedItems) => {
@@ -199,7 +237,8 @@ export default function Sales() {
           <Button type="link" onClick={() => handleOpenAccessory(record)}>Add Accessory</Button>
           <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
           <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
-          <Button type="link" onClick={() => handleReceipt(record, storeInfo)}>Receipt</Button>
+          <Button type="link" onClick={() => handleOpenReceiptModal(record)}>Set Up Receipt Info</Button>
+          <Button type="link" onClick={() => handleReceipt(record,storeInfo)}>Receipt</Button>
         </Space>
       )
     }] : [])
@@ -261,6 +300,63 @@ export default function Sales() {
               onChange={e => setAccessoryPrice(e.target.value)}
             />
           </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Generate Receipt"
+        open={openReceiptModal}
+        onCancel={handleCloseReceiptModal}
+        destroyOnClose
+        onOk={handleGenerateReceipt}
+      >
+        <Form>
+          <Form.Item label="Payment Type" required>
+            <Select value={paymentType} onChange={value => setPaymentType(value)}>
+              <Option value="cash">Cash</Option>
+              <Option value="card">Card</Option>
+              <Option value="check">Check</Option>
+              <Option value="achima">Achima</Option>
+              <Option value="snap">Snap</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item label="Discount">
+            <Input
+              type='number'
+              value={discount}
+              onChange={e=>setDiscount(e.target.value)}
+              addonBefore="$"
+            >
+            </Input>
+          </Form.Item>
+
+
+          <Form.Item label="Note">
+            <Input
+              value={note}
+              onChange={e=>setNote(e.target.value)}
+            >
+            </Input>
+          </Form.Item>
+          <Form.Item>
+            <Checkbox
+              checked={includeInstallation}
+              onChange={e => setIncludeInstallation(e.target.checked)}
+            >
+              Include Installation
+            </Checkbox>
+          </Form.Item>
+          {includeInstallation && (
+            <Form.Item label="Installation Fee" required>
+              <Input
+                type="number"
+                value={installationFee}
+                onChange={e => setInstallationFee(e.target.value)}
+                addonBefore="$"
+              />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>
