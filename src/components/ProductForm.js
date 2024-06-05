@@ -173,7 +173,10 @@ const ProductForm = ({handleClose}) =>{
     };
 
     const renderOtherDescriptions = (customer,cart) =>{
-        const totalPrice = calculateTotalPrice(customer,cart,taxRate);
+        let totalPrice = calculateTotalPrice(customer,cart,taxRate);
+        if(customer.discount){
+            totalPrice -= customer.discount;
+        }
         return(
         <Descriptions bordered style={{marginBottom:15}}>
             <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
@@ -182,6 +185,7 @@ const ProductForm = ({handleClose}) =>{
             <Descriptions.Item label="Sales">{customer.sales||'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Delivery Date">{customer.deliveryDate||'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Delivery Fee">${customer.deliveryFee||'N/A'}</Descriptions.Item>
+            <Descriptions.Item label="Discount">${customer.discount||'0'}</Descriptions.Item>
             <Descriptions.Item label="Total Price" style={{color:'red'}}>${totalPrice.toFixed(2)}</Descriptions.Item>
 
         </Descriptions>
@@ -219,7 +223,8 @@ const ProductForm = ({handleClose}) =>{
                         warrantyPrice: (item.warrantyPrice||0) * (Number(item.extendedwarranty)||0),
                         taxes: (taxRate !== null ? (item.price * taxRate * 0.01) : (store_info.tax ? (item.price * store_info.taxRate * 0.01) : 0)),
                         deliveryFee:customerData.deliveryFee,
-                        deliveryDate: customerData.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null
+                        deliveryDate: customerData.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null,
+                        discount:customerData.discount
                     }))
                 };
                 try{
@@ -445,6 +450,7 @@ const ProductForm = ({handleClose}) =>{
         />
     </ProForm.Group>
 
+    <ProForm.Group>
     <ProFormText
             name="tax_rate"
             label="Tax Rate"
@@ -458,8 +464,20 @@ const ProductForm = ({handleClose}) =>{
                 onChange:(e)=>setTaxRate(e.target.value)
             }}
         />
-        </StepsForm.StepForm>
 
+<ProFormText
+            name="discount"
+            label="Discount"
+            width='50%'
+            placeholder="Discount"
+            initialValue={0}
+            fieldProps={{
+                addonBefore:'$',
+                type:'number',
+            }}
+        />
+    </ProForm.Group>
+        </StepsForm.StepForm>
 
         <StepsForm.StepForm
             name="confirm"
