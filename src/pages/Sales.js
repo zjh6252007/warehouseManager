@@ -76,7 +76,7 @@ export default function Sales() {
       salesInfo.forEach((item) => {
         const key = `${item.store.id}-${item.invoiceNumber}`;
         if (!groupedData[key]) {
-          groupedData[key] = { ...item, total: 0, subtotal:0,totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0 };
+          groupedData[key] = { ...item, total: 0, subtotal:0,totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0,taxRate:0 };
         }
         groupedData[key].subtotal += item.price;
         groupedData[key].total += item.price;
@@ -85,15 +85,17 @@ export default function Sales() {
         groupedData[key].total -= item.discount || 0;
         groupedData[key].total += item.installationFee || 0;
         groupedData[key].totalTax += item.taxes || 0;
-        groupedData[key].items.push(item);
+        groupedData[key].items.push(item); 
       });
     }
     return Object.values(groupedData).map(data => ({
       ...data,
-      total: data.total + data.deliveryFee
+      total: data.total + data.deliveryFee,
+      taxRate: ((data.totalTax/data.subtotal)*100).toFixed(2)
     }));
   }, [salesInfo]);
 
+  console.log(aggregatedData)
   useEffect(() => {
     const filtered = aggregatedData.filter(item =>
       item.invoiceNumber.includes(searchText) ||

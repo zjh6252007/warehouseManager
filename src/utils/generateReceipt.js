@@ -133,8 +133,8 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     datacolum -= 10;
 
     pdf.text(`SUBTOTAL:$${subtotal.toFixed(2)}`,145,datacolum += 5);
-    pdf.text(`TAX:$${totalTax.toFixed(2)}`,145,datacolum += 7);
     pdf.text(`Discount:$${discount||0}`,145,datacolum+= 7);
+    pdf.text(`TAX:$${totalTax.toFixed(2)}`,145,datacolum += 7);
     pdf.text(`Total: $${total.toFixed(2)}`,145,datacolum += 10);
     datacolum -= 29;
     

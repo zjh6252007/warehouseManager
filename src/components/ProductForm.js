@@ -12,6 +12,7 @@ import { clearCart } from '../redux/modules/cart';
 import moment from 'moment';
 import { useLocation, useParams } from 'react-router-dom';
 import { fetchStoreDetail } from '../redux/modules/myStore';
+let totaltax=0;
 const ProductForm = ({handleClose}) =>{
     const dispatch = useDispatch();
     const location = useLocation();
@@ -135,26 +136,38 @@ const ProductForm = ({handleClose}) =>{
     }
     const cartList = useSelector(state=>state.cart.cartList);
 
-    const calculateTotalPrice=(customer,cart,taxRate)=>{
-        let totalPrice = cart.reduce((total,item)=>{
+    const calculateTotalPrice = (customer, cart) => {
+        let totalPrice = cart.reduce((total, item) => {
             let itemTotal = parseFloat(item.price);
-            if(item.extendedwarranty > 0 && item.warrantyPrice && !isNaN(parseFloat(item.warrantyPrice))){
-                itemTotal += parseFloat(item.warrantyPrice);
+            if (item.extendedwarranty > 0 && item.warrantyPrice && !isNaN(parseFloat(item.warrantyPrice))) {
+                itemTotal += parseFloat(item.warrantyPrice*item.extendedwarranty);
+            }
+            if (!isNaN(parseFloat(item.deliveryFee))) {
                 itemTotal += parseFloat(item.deliveryFee);
             }
-            const _taxRate = taxRate||store_info.taxRate;
-            if(store_info.tax){
-                itemTotal += (item.price * _taxRate * 0.01)
-            }
             return total + itemTotal;
-        },0);
+        }, 0);
+    
         if (customer.deliveryFee && !isNaN(parseFloat(customer.deliveryFee))) {
             totalPrice += parseFloat(customer.deliveryFee);
         }
+    
+        if (customer.discount) {
+            totalPrice -= parseFloat(customer.discount);
+        }
+    
+        const _taxRate = taxRate || store_info.taxRate;
+        if (_taxRate) {
+            totaltax = totalPrice * _taxRate * 0.01;
+            totalPrice += totaltax;
+        } else {
+            totaltax = 0;
+        }
+    
         return totalPrice;
-    }
-    const renderProductDescriptions = (item,taxRate) => {
-        const _taxRate = taxRate || store_info.tax;
+    };
+
+    const renderProductDescriptions = (item) => {
         return(
         <Descriptions bordered>
             <Descriptions.Item label="Model">{item.model}</Descriptions.Item>
@@ -164,19 +177,13 @@ const ProductForm = ({handleClose}) =>{
             <Descriptions.Item label="Extended Warranty">{item.extendedwarranty ? `${item.extendedwarranty} Years` : 'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Warranty Price">{item.warrantyPrice ? `$${item.warrantyPrice * item.extendedwarranty}` : 'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Serial Number" span={1}>{item.serialNumber}</Descriptions.Item>
-            {_taxRate &&(
-            <Descriptions.Item label="Tax">${(item.price * _taxRate*0.01).toFixed(2)}</Descriptions.Item>
-            )
-            }
         </Descriptions>
         )
     };
 
     const renderOtherDescriptions = (customer,cart) =>{
-        let totalPrice = calculateTotalPrice(customer,cart,taxRate);
-        if(customer.discount){
-            totalPrice -= customer.discount;
-        }
+        let totalPrice = calculateTotalPrice(customer,cart);
+        const _taxRate = taxRate||store_info.taxRate;
         return(
         <Descriptions bordered style={{marginBottom:15}}>
             <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
@@ -186,7 +193,11 @@ const ProductForm = ({handleClose}) =>{
             <Descriptions.Item label="Delivery Date">{customer.deliveryDate||'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Delivery Fee">${customer.deliveryFee||'N/A'}</Descriptions.Item>
             <Descriptions.Item label="Discount">${customer.discount||'0'}</Descriptions.Item>
-            <Descriptions.Item label="Total Price" style={{color:'red'}}>${totalPrice.toFixed(2)}</Descriptions.Item>
+            {_taxRate &&(
+            <Descriptions.Item label="Tax">${(totaltax).toFixed(2)}</Descriptions.Item>
+            )
+            }
+            <Descriptions.Item label="Total Price" style={{color:'red'}}>${(totalPrice).toFixed(2)}</Descriptions.Item>
 
         </Descriptions>
         );
@@ -221,7 +232,7 @@ const ProductForm = ({handleClose}) =>{
                         salesperson: customerData.sales,
                         warranty: (Number(item.freewarranty)||0) + (Number(item.extendedwarranty)||0),
                         warrantyPrice: (item.warrantyPrice||0) * (Number(item.extendedwarranty)||0),
-                        taxes: (taxRate !== null ? (item.price * taxRate * 0.01) : (store_info.tax ? (item.price * store_info.taxRate * 0.01) : 0)),
+                        taxes: totaltax,
                         deliveryFee:customerData.deliveryFee,
                         deliveryDate: customerData.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null,
                         discount:customerData.discount
@@ -485,10 +496,10 @@ const ProductForm = ({handleClose}) =>{
             >
         {cartList.map((item,id)=>(
             <div key={id} style={{marginBottom:12}}>
-                {item.type === 'Accessory'?'':renderProductDescriptions(item,taxRate)}
+                {item.type === 'Accessory'?'':renderProductDescriptions(item)}
             </div>
         ))}
-        {renderOtherDescriptions(customerData,cartList,taxRate)}
+        {renderOtherDescriptions(customerData,cartList)}
         </StepsForm.StepForm>
         </StepsForm>
     </>
