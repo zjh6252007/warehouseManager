@@ -1,5 +1,6 @@
 import jsPDF from "jspdf"
 import QRCode from "qrcode";
+import moment from "moment";
 const getBase64ImageFromURL = (url) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -32,7 +33,7 @@ const generateReceipt = async(orderInfo,companyInfo) =>{
 const pdf= new jsPDF();
 const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items,paymentType,installationFee,discount,note,subtotal} = orderInfo;
 const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
-    const formattedDate = createdAt.split("T")[0];  
+const formattedDate = moment(createdAt).format('MM/DD/YYYY'); 
     const totalPages = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
@@ -77,7 +78,7 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
 
     pdf.text("Delivery Infomation",130,55);
     if(items[0].deliveryDate){
-        const deliveryDate = items[0].deliveryDate.split("T")[0];
+        const deliveryDate = moment(items[0].deliveryDate).format('MM/DD/YYYY');
         pdf.text(`Delivery Date: ${deliveryDate}`,130,63);
         }else{
             pdf.text(`Delivery Date: N/A`,130,63);
