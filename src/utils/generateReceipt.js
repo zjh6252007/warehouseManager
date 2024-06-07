@@ -132,8 +132,12 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.text(paymentType||"",113,datacolum += 10);
 
     datacolum -= 10;
-
-    pdf.text(`SUBTOTAL:$${(total-totalTax).toFixed(2)}`,145,datacolum += 5);
+    
+    if(discount){
+    pdf.text(`SUBTOTAL:$${(total-totalTax+discount).toFixed(2)}`,145,datacolum += 5);
+    }else{
+      pdf.text(`SUBTOTAL:$${(total-totalTax).toFixed(2)}`,145,datacolum += 5);
+    }
     pdf.text(`Discount:$${discount||0}`,145,datacolum+= 7);
     pdf.text(`TAX:$${totalTax.toFixed(2)}`,145,datacolum += 7);
     pdf.text(`Total: $${total.toFixed(2)}`,145,datacolum += 10);
