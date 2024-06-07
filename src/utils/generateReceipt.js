@@ -133,7 +133,7 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
 
     datacolum -= 10;
 
-    pdf.text(`SUBTOTAL:$${subtotal.toFixed(2)}`,145,datacolum += 5);
+    pdf.text(`SUBTOTAL:$${(total-totalTax).toFixed(2)}`,145,datacolum += 5);
     pdf.text(`Discount:$${discount||0}`,145,datacolum+= 7);
     pdf.text(`TAX:$${totalTax.toFixed(2)}`,145,datacolum += 7);
     pdf.text(`Total: $${total.toFixed(2)}`,145,datacolum += 10);
