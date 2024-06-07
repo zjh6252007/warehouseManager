@@ -76,7 +76,7 @@ export default function Sales() {
       salesInfo.forEach((item) => {
         const key = `${item.store.id}-${item.invoiceNumber}`;
         if (!groupedData[key]) {
-          groupedData[key] = { ...item, total: 0, subtotal:0,totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0,taxRate:0 };
+          groupedData[key] = { ...item, total: 0, subtotal:0,totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0,taxRate:0,totalAfterDiscount:0 };
         }
         groupedData[key].subtotal += item.price;
         groupedData[key].total += item.price;
@@ -145,7 +145,6 @@ export default function Sales() {
   };
 
   const handleReceipt = (record, storeInfo) => {
-    console.log(record)
     generateReceipt(record, storeInfo);
   };
 
@@ -241,6 +240,7 @@ export default function Sales() {
           <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
           <Button type="link" onClick={() => handleOpenReceiptModal(record)}>Set Up Receipt Info</Button>
           <Button type="link" onClick={() => handleReceipt(record,storeInfo)}>Receipt</Button>
+          <Button type="link" onClick={() => generateDeliveryOrder(record,storeInfo)}>Delivery Form</Button>
         </Space>
       )
     }] : [])

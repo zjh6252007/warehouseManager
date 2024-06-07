@@ -99,7 +99,7 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.setFontSize(9);
     items.forEach(item=>{
         pdf.text(item.model,18,datacolum);
-        pdf.text(`${item.serialNumber||"N/A"}`,45,datacolum);
+        pdf.text(`${item.serialNumber||""}`,45,datacolum);
         pdf.text(item.type,82,datacolum);
         pdf.text(`$${item.price}`,115,datacolum);
         pdf.text(`${item.warranty} Years`,145,datacolum);
