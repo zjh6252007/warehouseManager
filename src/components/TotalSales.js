@@ -7,7 +7,7 @@ const TotalSales = ({title,value}) =>{
     const formatter = (value) => <CountUp end={value} separator="," />;
     return(
     <Col span={12}>
-      <Statistic title={title} value={value} formatter={formatter} prefix="$"/>
+      <Statistic title={title} value={value} formatter={formatter} prefix="$" valueStyle={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}/>
     </Col>
     )
 };
