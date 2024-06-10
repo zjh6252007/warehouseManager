@@ -11,6 +11,7 @@ import ReturnModalContent from '../components/ReturnModalContent';
 import { clearSalesList } from '../redux/modules/sales';
 import { generateDeliveryOrder } from '../utils/generateDeliveryOrder';
 import { addAccessory,setReceipt} from '../redux/modules/sales';
+import moment from 'moment';
 import store from '../redux/store';
 
 const { Option } = Select;
@@ -45,12 +46,12 @@ export default function Sales() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown Date';
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return 'Invalid Date';
+    const date = moment(dateString);
+    if (!date.isValid()) {
+        return 'Invalid Date';
     }
-    return date.toISOString().split('T')[0];
-  };
+    return date.format('MM/DD/YYYY');
+};
 
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [open, setOpen] = useState(false);
@@ -207,6 +208,8 @@ export default function Sales() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: formatDate,
+      defaultSortOrder: 'descend', 
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
     },
     {
       title: 'Customer',
