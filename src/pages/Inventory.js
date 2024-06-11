@@ -7,6 +7,7 @@ import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
 import InventoryToolbar from '../components/InventoryToolBar';
 import { deleteInventory } from '../redux/modules/inventory';
+import Papa from 'papaparse';
 
 const Inventory = () => {
   const userInfo = useSelector(state => state.user.userInfo);
@@ -103,6 +104,22 @@ const Inventory = () => {
 
   const inventoryData = useSelector(state => state.inventory.inventoryList);
 
+  const handleDownload = () => {
+    const dataToExport = inventoryData.map(({ limitPercentage, qty,unitWeight,store, ...rest }) => rest);
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'inventory.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
+
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
       {userInfo.role === 'admin' &&(<InventoryToolbar numSelected={selectedRows.length} onDelete={()=>handleDelete()} />)}
@@ -122,6 +139,13 @@ const Inventory = () => {
             />
           </Button>
         )}
+        <Button
+          variant="contained"
+          onClick={handleDownload}
+          sx={{ ml: 2 }}
+        >
+          Download Inventory
+        </Button>
       </Box>
       {selectedRows.length > 0 && userInfo.role === 'admin' &&(
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
