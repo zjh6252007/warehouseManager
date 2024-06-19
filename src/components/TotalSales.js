@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Col,Statistic } from 'antd';
+import { Col,Statistic} from 'antd';
 import CountUp from 'react-countup';
 
 const TotalSales = ({title,value}) =>{

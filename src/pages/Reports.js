@@ -3,7 +3,7 @@ import { Container, Grid, Paper } from '@mui/material';
 import { DatePicker, Row, Col } from 'antd';
 import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
-import { getSalesByDate,getAllSalesByRange } from '../redux/modules/sales';
+import { getSalesByDate, getAllSalesByRange } from '../redux/modules/sales';
 import TotalSales from '../components/TotalSales';
 import { getInventoryById } from '../redux/modules/inventory';
 import { useEffect } from 'react';
@@ -11,28 +11,27 @@ import { useLocation, useParams } from 'react-router-dom';
 import { getAllInventory } from '../redux/modules/inventory';
 import EmployeeSales from '../components/EmployeeSales';
 import Charts from '../components/Chart';
-
 const Reports = () => {
   const dispatch = useDispatch();
   const { storeId } = useParams();
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
-  
+
   useEffect(() => {
-    if(isStorePage){
-    dispatch(getInventoryById(storeId));
-    }else{
+    if (isStorePage) {
+      dispatch(getInventoryById(storeId));
+    } else {
       dispatch(getAllInventory());
     }
     const dateRange = {
       start: moment().format('YYYY-MM-DDTHH:mm:ss'),
       end: moment().format('YYYY-MM-DDTHH:mm:ss')
     };
-    if(isStorePage){
-    dispatch(getSalesByDate(dateRange,storeId))
-    }else{
-      dispatch(getAllSalesByRange(dateRange))
-    };
+    if (isStorePage) {
+      dispatch(getSalesByDate(dateRange, storeId));
+    } else {
+      dispatch(getAllSalesByRange(dateRange));
+    }
   }, [dispatch, storeId]);
 
   const inventory = useSelector(state => state.inventory.inventoryList);
@@ -43,25 +42,23 @@ const Reports = () => {
         start: moment(dateStrings[0]).startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
         end: moment(dateStrings[1]).endOf('day').format('YYYY-MM-DDTHH:mm:ss')
       };
-      if(isStorePage){
-      dispatch(getSalesByDate(dateRange, storeId));
-      }else{
+      if (isStorePage) {
+        dispatch(getSalesByDate(dateRange, storeId));
+      } else {
         dispatch(getAllSalesByRange(dateRange));
       }
     }
   };
 
   const salesData = useSelector(state => state.sales.salesData);
-  
   const totalSales = salesData.reduce((acc, sale) => {
     const { invoiceNumber, price, warrantyPrice, deliveryFee, storeId, discount } = sale;
-    acc.total += (price || 0) + (warrantyPrice || 0) - (discount || 0) ;
+    acc.total += (price || 0) + (warrantyPrice || 0) - (discount || 0);
     const invoiceKey = `${invoiceNumber}-${storeId}`;
     if (!acc.invoices.has(invoiceKey)) {
       acc.total += deliveryFee || 0;
       acc.invoices.set(invoiceKey, true);
     }
-  
     return acc;
   }, { total: 0, invoices: new Map() });
   const finalTotalSales = totalSales.total;
@@ -75,15 +72,14 @@ const Reports = () => {
     }
     return acc;
   }, { total: 0, invoices: new Map() }).total;
-  
-  
+
   const costData = inventory.reduce((cost, inventory) => {
-    return cost + (inventory.status === 'inStock' ? inventory.cost:0);
+    return cost + (inventory.status === 'inStock' ? inventory.cost : 0);
   }, 0);
 
-  const totalTax = salesData.reduce((total,sale)=>{
+  const totalTax = salesData.reduce((total, sale) => {
     return total + (sale.taxes || 0);
-  },0)
+  }, 0);
 
   const revenue = salesData.reduce((total, sale) => {
     if (sale.type === 'Accessory') {
@@ -91,13 +87,23 @@ const Reports = () => {
     }
     const inventoryItem = inventory.find(item => item.sku === sale.serialNumber);
     if (inventoryItem) {
-      const profit = (sale.price || 0) - (inventoryItem.cost || 0) - (sale.taxes||0) - (sale.discount || 0);
+      const profit = (sale.price || 0) - (inventoryItem.cost || 0) - (sale.taxes || 0) - (sale.discount || 0);
       return total + profit;
     }
     return total;
   }, 0);
 
-
+  const cost = salesData.reduce((total,sale)=>{
+    if (sale.type === 'Accessory') {
+      return total;
+    }
+    const inventoryItem = inventory.find(item=> item.sku === sale.serialNumber);
+    if(inventoryItem){
+    const cost = inventoryItem.cost||0;
+    return total + cost;
+    }
+    return total;
+  },0)
   const salesBySalesperson = salesData.reduce((acc, sale) => {
     if (!acc[sale.salesperson]) {
       acc[sale.salesperson] = 0;
@@ -124,7 +130,7 @@ const Reports = () => {
           </Col>
         </Row>
         <Grid container spacing={3}>
-        <Grid item xs={12} lg={2.4}>
+          <Grid item xs={12} lg={4}>
             <Paper
               sx={{
                 p: 2,
@@ -136,8 +142,8 @@ const Reports = () => {
               <TotalSales title="Total Costs" value={costData} />
             </Paper>
           </Grid>
-          
-          <Grid item xs={12} lg={2.4}>
+
+          <Grid item xs={12} lg={4}>
             <Paper
               sx={{
                 p: 2,
@@ -146,11 +152,11 @@ const Reports = () => {
                 height: 120,
               }}
             >
-              <TotalSales title="Sales" value={finalTotalSales} />
+              <TotalSales title="Sales" value={finalTotalSales}/>
             </Paper>
           </Grid>
 
-          <Grid item xs={12} lg={2.4}>
+          <Grid item xs={12} lg={4}>
             <Paper
               sx={{
                 p: 2,
@@ -163,7 +169,20 @@ const Reports = () => {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} lg={2.4}>
+          <Grid item xs={12} lg={4}>
+            <Paper
+              sx={{
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                height: 120,
+              }}
+            >
+              <TotalSales title="Cost" value={cost} />
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} lg={4}>
             <Paper
               sx={{
                 p: 2,
@@ -176,7 +195,7 @@ const Reports = () => {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} lg={2.4}>
+          <Grid item xs={12} lg={4}>
             <Paper
               sx={{
                 p: 2,
@@ -189,13 +208,13 @@ const Reports = () => {
             </Paper>
           </Grid>
 
-          <Grid item xs={12} md={8} lg={9}>
+          <Grid item xs={12} md={12} lg={12}>
             <Paper
               sx={{
                 p: 2,
                 display: 'flex',
                 flexDirection: 'column',
-                height: 240, // Adjust height as necessary
+                height: 240, 
               }}
             >
               <Charts />
