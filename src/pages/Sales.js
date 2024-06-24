@@ -153,7 +153,6 @@ export default function Sales() {
     const installationDiscountDTO = {
       installation:includeInstallation,
       paymentType:paymentType,
-      discount:discount,
       installationFee:installationFee,
       note:note,
       storeId:selectedRecord.store.id,
@@ -325,17 +324,6 @@ export default function Sales() {
               <Option value="snap">Snap</Option>
             </Select>
           </Form.Item>
-
-          <Form.Item label="Discount">
-            <Input
-              type='number'
-              value={discount}
-              onChange={e=>setDiscount(e.target.value)}
-              addonBefore="$"
-            >
-            </Input>
-          </Form.Item>
-
 
           <Form.Item label="Note">
             <Input

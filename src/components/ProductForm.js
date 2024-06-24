@@ -235,7 +235,9 @@ const ProductForm = ({handleClose}) =>{
                         taxes: totaltax,
                         deliveryFee:customerData.deliveryFee,
                         deliveryDate: customerData.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null,
-                        discount:customerData.discount
+                        discount:customerData.discount,
+                        note:customerData.note,
+                        paymentType:customerData.paymentType
                     }))
                 };
                 try{
@@ -460,6 +462,20 @@ const ProductForm = ({handleClose}) =>{
             }}
         />
     </ProForm.Group>
+    
+    <ProFormSelect
+    name="paymentType"
+    label="Payment Type"
+    placeholder="Select a payment type"
+    options={[
+      {value:' ',label:' '},
+      { value: 'cash', label: 'Cash' },
+      { value: 'card', label: 'Card' },
+      { value: 'check', label: 'Check' },
+      { value: 'achima', label: 'Achima' },
+      { value: 'snap', label: 'Snap' },
+    ]}
+  />
 
     <ProForm.Group>
     <ProFormText
@@ -488,6 +504,11 @@ const ProductForm = ({handleClose}) =>{
             }}
         />
     </ProForm.Group>
+    <ProFormText
+            name="note"
+            label="Note"
+            placeholder="Add note "
+        />
         </StepsForm.StepForm>
 
         <StepsForm.StepForm
