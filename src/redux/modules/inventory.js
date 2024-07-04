@@ -19,11 +19,21 @@ const inventory = createSlice({
 
 const {setInventoryList,decreseInventoryQty,removeInventoryItems} = inventory.actions;
 
-
 const getAllInventory = () =>async(dispatch)=>{
     const res = await request.get("/api/inventory/getAll");
     dispatch(setInventoryList(res.data));
     return res.data;
+}
+
+const addInventory = (data) =>async(dispatch)=>{
+    const res = await request.post("/api/inventory/addInventory",data);
+    if(res.code === 0){
+    dispatch(getAllInventory());
+    }else{
+        console.error(res.message);
+    }
+    console.log(res)
+    return res;
 }
 
 const getInventory = () =>async(dispatch) =>{
@@ -83,6 +93,6 @@ const deleteInventory = (idList)=>async(dispatch)=>{
         console.log(error);
     }
 }
-export {getAllInventory,getInventory,decreseInventoryQty,getInventoryById,uploadInventoryFile,updateLimitPercentage,deleteInventory};
+export {getAllInventory,getInventory,decreseInventoryQty,getInventoryById,uploadInventoryFile,updateLimitPercentage,deleteInventory,addInventory};
 const inventoryReducer = inventory.reducer;
 export default inventoryReducer

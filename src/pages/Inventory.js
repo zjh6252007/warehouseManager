@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile } from '../redux/modules/inventory';
+import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile,addInventory} from '../redux/modules/inventory';
 import { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
 import InventoryToolbar from '../components/InventoryToolBar';
 import { deleteInventory } from '../redux/modules/inventory';
+import InventoryForm from '../components/InventoryForm';
 import Papa from 'papaparse';
 
 const Inventory = () => {
@@ -16,6 +17,7 @@ const Inventory = () => {
   const isStorePage = location.pathname.includes('/mystore');
   const { storeId } = useParams();
   const [selectedRows, setSelectedRows] = useState([]);
+  const [inventoryFormVisible,setInventoryFormVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   
   useEffect(() => {
@@ -85,6 +87,15 @@ const Inventory = () => {
     });
   }
 
+  const onCreate = (values) => {
+    const newInventory={
+      ...values,
+      store: { id: parseInt(storeId, 10) }
+    };
+    dispatch(addInventory(newInventory));
+    console.log('Received values from form: ', newInventory);
+  };
+
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -138,7 +149,10 @@ const Inventory = () => {
               onChange={handleFileChange}
             />
           </Button>
+
+          
         )}
+        
         <Button
           variant="contained"
           onClick={handleDownload}
@@ -146,6 +160,15 @@ const Inventory = () => {
         >
           Download Inventory
         </Button>
+        {isStorePage &&(
+        <Button
+          variant="contained"
+          sx={{ ml: 2 }}
+          onClick={()=>setInventoryFormVisible(true)}
+        >
+          Add Inventory
+        </Button>
+        )}
       </Box>
       {selectedRows.length > 0 && userInfo.role === 'admin' &&(
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
@@ -173,6 +196,11 @@ const Inventory = () => {
           setSelectedRows(selectedItems);
         }}
         isRowSelectable={(params) => params.row.status !== 'sold'}
+      />
+        <InventoryForm
+        visible={inventoryFormVisible}
+        onCreate={onCreate}
+        onCancel={() => setInventoryFormVisible(false)}
       />
     </Box>
   );
