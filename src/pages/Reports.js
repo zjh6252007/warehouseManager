@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getSalesByDate, getAllSalesByRange } from '../redux/modules/sales';
 import TotalSales from '../components/TotalSales';
 import { getInventoryById } from '../redux/modules/inventory';
-import { useEffect } from 'react';
+import { useEffect,useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { getAllInventory } from '../redux/modules/inventory';
 import EmployeeSales from '../components/EmployeeSales';
@@ -16,7 +16,8 @@ const Reports = () => {
   const { storeId } = useParams();
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
-
+  const [startDate,setStartDate] = useState();
+  const [endDate,setEndDate] = useState();
   useEffect(() => {
     if (isStorePage) {
       dispatch(getInventoryById(storeId));
@@ -38,6 +39,8 @@ const Reports = () => {
 
   const handleChange = (dates, dateStrings) => {
     if (dates) {
+      setStartDate(moment(dateStrings[0]).startOf('day').format('YYYY-MM-DDTHH:mm:ss'));
+      setEndDate(moment(dateStrings[1]).endOf('day').format('YYYY-MM-DDTHH:mm:ss'));
       const dateRange = {
         start: moment(dateStrings[0]).startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
         end: moment(dateStrings[1]).endOf('day').format('YYYY-MM-DDTHH:mm:ss')
@@ -72,11 +75,15 @@ const Reports = () => {
     }
     return acc;
   }, { total: 0, invoices: new Map() }).total;
-
+  
   const costData = inventory.reduce((cost, inventory) => {
-    return cost + (inventory.status === 'inStock' ? inventory.cost : 0);
+    const uploadDate = moment(inventory.uploadDate, 'YYYY-MM-DDTHH:mm:ss');
+    if (uploadDate.isBetween(startDate, endDate, undefined, '[]') && inventory.status === 'inStock') {
+      return cost + inventory.cost;
+    }
+    return cost;
   }, 0);
-
+  
   const totalTax = salesData.reduce((total, sale) => {
     return total + (sale.taxes || 0);
   }, 0);
