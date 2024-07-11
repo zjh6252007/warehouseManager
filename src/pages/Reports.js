@@ -77,13 +77,9 @@ const Reports = () => {
   }, { total: 0, invoices: new Map() }).total;
   
   const costData = inventory.reduce((cost, inventory) => {
-    const uploadDate = moment(inventory.uploadDate, 'YYYY-MM-DDTHH:mm:ss');
-    if (uploadDate.isBetween(startDate, endDate, undefined, '[]') && inventory.status === 'inStock') {
-      return cost + inventory.cost;
-    }
-    return cost;
+    return cost + (inventory.status === 'inStock' ? inventory.cost : 0);
   }, 0);
-  
+
   const totalTax = salesData.reduce((total, sale) => {
     return total + (sale.taxes || 0);
   }, 0);
