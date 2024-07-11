@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, Space, Modal, Input, Button, Form, Checkbox, Select } from 'antd';
+import { Table, Space, Modal, Input, Button, Form, Checkbox, Select,DatePicker } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { getSalesByStoreId, deleteSales, getAllSales, returnSales } from '../redux/modules/sales';
@@ -12,7 +12,6 @@ import { clearSalesList } from '../redux/modules/sales';
 import { generateDeliveryOrder } from '../utils/generateDeliveryOrder';
 import { addAccessory,setReceipt} from '../redux/modules/sales';
 import moment from 'moment';
-import store from '../redux/store';
 
 const { Option } = Select;
 
@@ -68,8 +67,8 @@ export default function Sales() {
   const [paymentType, setPaymentType] = useState('');
   const [includeInstallation, setIncludeInstallation] = useState(false);
   const [installationFee, setInstallationFee] = useState('');
-  const [discount,setDiscount] = useState('');
   const [note,setNote] = useState('');
+  const [receiptDate, setReceiptDate] = useState(null);
 
   const aggregatedData = React.useMemo(() => {
     const groupedData = {};
@@ -96,7 +95,6 @@ export default function Sales() {
     }));
   }, [salesInfo]);
 
-  console.log(aggregatedData)
   useEffect(() => {
     const filtered = aggregatedData.filter(item =>
       item.invoiceNumber.includes(searchText) ||
@@ -135,6 +133,11 @@ export default function Sales() {
 
   const handleOpenReceiptModal = (record) => {
     setSelectedRecord(record);
+    setPaymentType(record.paymentType || '');
+    setIncludeInstallation(!!record.includeInstallation);
+    setInstallationFee(record.installationFee || '');
+    setNote(record.note || '');
+    setReceiptDate(record.createdAt ? moment(record.createdAt) : null);
     setOpenReceiptModal(true);
   };
 
@@ -156,7 +159,8 @@ export default function Sales() {
       installationFee:installationFee,
       note:note,
       storeId:selectedRecord.store.id,
-      invoiceNumber:selectedRecord.invoiceNumber
+      invoiceNumber:selectedRecord.invoiceNumber,
+      createdAt:receiptDate
     };
     dispatch(setReceipt(installationDiscountDTO,selectedRecord.store.id))
     handleCloseReceiptModal();
@@ -186,7 +190,6 @@ export default function Sales() {
       price:accessoryPrice,
       model:accessoryName
     };
-    console.log(accessoryDTO);
     dispatch(addAccessory(accessoryDTO,selectedRecord.store.id));
     handleCloseAccessory();
   };
@@ -331,6 +334,14 @@ export default function Sales() {
               onChange={e=>setNote(e.target.value)}
             >
             </Input>
+          </Form.Item>
+          <Form.Item label="Receipt Date">
+            <DatePicker
+              onChange={(date) => setReceiptDate(date)}
+              format="YYYY-MM-DDTHH:mm:ss"
+              showTime
+              value={receiptDate}
+            />
           </Form.Item>
           <Form.Item>
             <Checkbox
