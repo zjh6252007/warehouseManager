@@ -241,8 +241,12 @@ export default function Sales() {
       render: (_, record) => (
         <Space size="middle">
           <Button type="link" onClick={() => handleOpenAccessory(record)}>Add Accessory</Button>
+          {userInfo.role !== 'user' &&(
+            <>
           <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
           <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
+            </>
+          )}
           <Button type="link" onClick={() => handleOpenReceiptModal(record)}>Set Up Receipt Info</Button>
           <Button type="link" onClick={() => handleReceipt(record,storeInfo)}>Receipt</Button>
           <Button type="link" onClick={() => generateDeliveryOrder(record,storeInfo)}>Delivery Form</Button>
