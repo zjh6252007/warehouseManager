@@ -9,6 +9,7 @@ import InventoryToolbar from '../components/InventoryToolBar';
 import { deleteInventory } from '../redux/modules/inventory';
 import InventoryForm from '../components/InventoryForm';
 import Papa from 'papaparse';
+import { message } from 'antd';
 
 const Inventory = () => {
   const userInfo = useSelector(state => state.user.userInfo);
@@ -87,13 +88,22 @@ const Inventory = () => {
     });
   }
 
-  const onCreate = (values) => {
+  const onCancel = () =>{
+    setInventoryFormVisible(false);
+  }
+  const onCreate = async(values) => {
     const newInventory={
       ...values,
       store: { id: parseInt(storeId, 10) }
     };
-    dispatch(addInventory(newInventory));
-    console.log('Received values from form: ', newInventory);
+    try{
+    await dispatch(addInventory(newInventory));
+    onCancel();
+    message.success("Successfully added inventory!");
+    
+    }catch(error){
+      console.error('Failed to add Inventory:',error);
+    }
   };
 
   const handleFileChange = async (event) => {

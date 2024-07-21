@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Form, Input, Button } from 'antd';
+import { Modal, Form, Input} from 'antd';
 
 const InventoryForm = ({ visible, onCreate, onCancel }) => {
   const [form] = Form.useForm();
@@ -29,6 +29,29 @@ const InventoryForm = ({ visible, onCreate, onCancel }) => {
         name="form_in_modal"
       >
         <Form.Item
+          name="sku"
+          label="SKU"
+          rules={[{ required: true, message: 'Please input the SKU!' }]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item
+          name="product"
+          label="Product"
+          rules={[{ required: true, message: 'Please input the Item type!' }]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
+          name="model"
+          label="Model"
+          rules={[{ required: true, message: 'Please input the model number!' }]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
           name="itemDescription"
           label="Item Description"
         >
@@ -43,19 +66,6 @@ const InventoryForm = ({ visible, onCreate, onCancel }) => {
         <Form.Item
           name="brand"
           label="Brand"
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="model"
-          label="Model"
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="sku"
-          label="SKU"
-          rules={[{ required: true, message: 'Please input the SKU!' }]}
         >
           <Input />
         </Form.Item>
@@ -83,12 +93,7 @@ const InventoryForm = ({ visible, onCreate, onCancel }) => {
         >
           <Input />
         </Form.Item>
-        <Form.Item
-          name="product"
-          label="Product"
-        >
-          <Input />
-        </Form.Item>
+
         <Form.Item
           name="cost"
           label="Cost"
