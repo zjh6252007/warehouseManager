@@ -98,7 +98,7 @@ export default function Sales() {
   useEffect(() => {
     const filtered = aggregatedData.filter(item =>
       item.invoiceNumber.includes(searchText) ||
-      item.customer.toLowerCase().includes(searchText.toLowerCase())
+      (item.customer && item.customer.toLowerCase().includes(searchText.toLowerCase()))
     );
     setFilteredData(filtered);
   }, [searchText, aggregatedData]);
