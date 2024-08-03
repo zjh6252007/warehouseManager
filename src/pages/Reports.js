@@ -66,7 +66,6 @@ const Reports = () => {
   }, { total: 0, invoices: new Map() });
   const finalTotalSales = totalSales.total;
 
-  console.log(salesData)
   const totalDeliveryFee = salesData.reduce((acc, sale) => {
     const { invoiceNumber, storeId, deliveryFee } = sale;
     const invoiceKey = `${invoiceNumber}-${storeId}`;
