@@ -90,7 +90,7 @@ const Reports = () => {
     }
     const inventoryItem = inventory.find(item => item.sku === sale.serialNumber);
     if (inventoryItem) {
-      const profit = (sale.price || 0) - (inventoryItem.cost || 0) - (sale.taxes || 0) - (sale.discount || 0);
+      const profit = (sale.price || 0) - (inventoryItem.cost || 0) - (sale.taxes || 0);
       return total + profit;
     }
     return total;
