@@ -66,6 +66,7 @@ const Reports = () => {
   }, { total: 0, invoices: new Map() });
   const finalTotalSales = totalSales.total;
 
+  console.log(salesData)
   const totalDeliveryFee = salesData.reduce((acc, sale) => {
     const { invoiceNumber, storeId, deliveryFee } = sale;
     const invoiceKey = `${invoiceNumber}-${storeId}`;
@@ -85,15 +86,13 @@ const Reports = () => {
   }, 0);
 
   const revenue = salesData.reduce((total, sale) => {
-    if (sale.type === 'Accessory') {
-      return total + (sale.price || 0);
-    }
     const inventoryItem = inventory.find(item => item.sku === sale.serialNumber);
-    if (inventoryItem) {
-      const profit = (sale.price || 0) +(sale.warrantyPrice || 0) - (inventoryItem.cost || 0) - (sale.taxes || 0);
-      return total + profit;
-    }
-    return total;
+    let netSaleAmount = sale.price || 0;
+    netSaleAmount += (sale.warrantyPrice || 0);
+    netSaleAmount -= (sale.discount || 0);
+    const cost = inventoryItem ? (inventoryItem.cost || 0) : 0;
+    const profit = netSaleAmount - cost;
+    return total + profit;
   }, 0);
 
   const cost = salesData.reduce((total,sale)=>{
