@@ -59,7 +59,7 @@ const Inventory = () => {
     { field: 'category', headerName: 'Category', width: 160 },
     { field: 'subcategory', headerName: 'Subcategory', width: 220 },
     {
-      field: 'unitRetail', headerName: 'Unit Retail', width: 130,
+      field: 'unitRetail', headerName: 'Sale Price', width: 130,
       renderCell: (params) => (
         params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
@@ -67,7 +67,7 @@ const Inventory = () => {
       )
     },
     {
-      field: 'extRetail', headerName: 'Ext Retail', width: 130,
+      field: 'extRetail', headerName: 'Unit Retail', width: 130,
       renderCell: (params) => (
         params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
