@@ -163,6 +163,7 @@ const Inventory = () => {
           
         )}
         
+        {userInfo.role === 'admin' &&(
         <Button
           variant="contained"
           onClick={handleDownload}
@@ -170,6 +171,8 @@ const Inventory = () => {
         >
           Download Inventory
         </Button>
+        )}
+        
         {isStorePage &&(
         <Button
           variant="contained"
