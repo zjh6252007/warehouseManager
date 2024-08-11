@@ -67,6 +67,7 @@ export default function Sales() {
   const [paymentType, setPaymentType] = useState('');
   const [includeInstallation, setIncludeInstallation] = useState(false);
   const [installationFee, setInstallationFee] = useState('');
+  const [discount,setDiscount] = useState('');
   const [note,setNote] = useState('');
   const [receiptDate, setReceiptDate] = useState(null);
 
@@ -136,6 +137,7 @@ export default function Sales() {
     setPaymentType(record.paymentType || '');
     setIncludeInstallation(!!record.includeInstallation);
     setInstallationFee(record.installationFee || '');
+    setDiscount(record.discount || '');
     setNote(record.note || '');
     setReceiptDate(record.createdAt ? moment(record.createdAt) : null);
     setOpenReceiptModal(true);
@@ -157,6 +159,7 @@ export default function Sales() {
       installation:includeInstallation,
       paymentType:paymentType,
       installationFee:installationFee,
+      discount:discount,
       note:note,
       storeId:selectedRecord.store.id,
       invoiceNumber:selectedRecord.invoiceNumber,
