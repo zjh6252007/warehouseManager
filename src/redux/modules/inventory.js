@@ -25,16 +25,18 @@ const getAllInventory = () =>async(dispatch)=>{
     return res.data;
 }
 
-const addInventory = (data) =>async(dispatch)=>{
-    const res = await request.post("/api/inventory/addInventory",data);
-    if(res.code === 0){
-    dispatch(getAllInventory());
-    }else{
-        console.error(res.message);
+const addInventory = (data) => async (dispatch) => {
+    const res = await request.post("/api/inventory/addInventory", data);
+  
+    if (res.code === 0) {
+      // 直接调用 getInventoryById，因为 storeId 一定会传入
+      await dispatch(getInventoryById(data.store.id));
+    } else {
+      console.error(res.message);
     }
-    console.log(res)
+  
     return res;
-}
+  };
 
 const getInventory = () =>async(dispatch) =>{
     const res = await request.get("/api/inventory/getInventory");
@@ -59,7 +61,7 @@ const uploadInventoryFile=(file,storeId) =>async(dispatch) =>{
         timeout: 300000
     });
     if(res.code === 0){
-        dispatch(getAllInventory());
+        await dispatch(getInventoryById(storeId));
     }else{
         console.error('File upload failed',res.message);
     }

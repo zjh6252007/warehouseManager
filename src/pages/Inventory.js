@@ -23,7 +23,6 @@ const Inventory = () => {
   const [inventoryFormVisible, setInventoryFormVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingInventory, setEditingInventory] = useState(null);
-  console.log(storeInfo)
   useEffect(() => {
     if (isStorePage) {
       dispatch(getInventoryById(storeId));
@@ -84,28 +83,32 @@ const Inventory = () => {
   // Add cost and modify button for admin users
   if (userInfo.role === 'admin') {
     columns.push({
-      field: 'cost', headerName: 'Cost', width: 100,
+      field: 'cost', 
+      headerName: 'Cost', 
+      width: 100,
       renderCell: (params) => (
         params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
           : '$0.00'
       )
     });
-
- /*   columns.push({
+  
+    columns.push({
       field: 'modify',
       headerName: 'Modify',
       width: 150,
       renderCell: (params) => (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => handleModify(params.row)}
-        >
-          Modify
-        </Button>
+        params.row.status !== 'sold' && isStorePage === true ? (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleModify(params.row)}
+          >
+            Modify
+          </Button>
+        ) : null // 如果 status 是 'sold'，则不显示按钮
       ),
-    });*/
+    });
   }
 
   const onCancel = () => {
@@ -114,20 +117,39 @@ const Inventory = () => {
   };
 
   const onCreate = async (values) => {
+    const isStoreChanged = editingInventory?.store?.id !== values.storeId; // 使用 editingInventory
     const inventoryData = {
       ...values,
-      store: { id: parseInt(storeId, 10) }
+      store: { id: values.storeId }  // 构造 store 对象
     };
-
+  
     try {
-      await dispatch(addInventory(inventoryData));
-      message.success("Successfully added inventory!");
-      onCancel();
+      if (!isStoreChanged) {
+        // 如果 Store 没有变化，只是修改商品
+        await dispatch(deleteInventory([editingInventory.id])); // 使用 editingInventory.id
+        await dispatch(addInventory(inventoryData));
+      } else {
+        // 如果 Store 发生了变化
+        try {
+          // 先尝试添加新的库存，如果 SKU 存在则会抛出错误
+          await dispatch(addInventory(inventoryData));
+          // 如果成功，删除旧的库存
+          await dispatch(deleteInventory([editingInventory.id])); // 使用 editingInventory.id
+        } catch (error) {
+          // 如果添加失败（例如 SKU 已存在）
+          console.error('Failed to add inventory:', error);
+          message.error('Failed to add inventory: SKU may already exist in the target store.');
+          return;  // 终止流程
+        }
+      }
+      message.success("Inventory successfully modified!");
+      onCancel(); 
     } catch (error) {
-      console.error('Failed to add inventory:', error);
+      console.error('Failed to modify inventory:', error);
+      message.error("Failed to modify inventory.");
     }
   };
-
+  
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
