@@ -92,7 +92,7 @@ const Inventory = () => {
       )
     });
 
-    columns.push({
+ /*   columns.push({
       field: 'modify',
       headerName: 'Modify',
       width: 150,
@@ -105,7 +105,7 @@ const Inventory = () => {
           Modify
         </Button>
       ),
-    });
+    });*/
   }
 
   const onCancel = () => {
