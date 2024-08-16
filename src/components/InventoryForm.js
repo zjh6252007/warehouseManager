@@ -1,16 +1,36 @@
-import React from 'react';
-import { Modal, Form, Input} from 'antd';
+import React, { useEffect } from 'react';
+import { Modal, Form, Input, Select } from 'antd';
 
-const InventoryForm = ({ visible, onCreate, onCancel }) => {
+const { Option } = Select;
+
+const InventoryForm = ({ visible, onCreate, onCancel, initialValues, storeInfo }) => {
   const [form] = Form.useForm();
+
+  // 设置表单的初始值，包括默认的storeId
+  useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue(initialValues);
+    }
+  }, [initialValues, form]);
+
+  // 当选择框发生变化时，自动更新隐藏的 storeId 字段
+  const handleStoreChange = (value) => {
+    const selectedStore = storeInfo.find(store => store.address === value);
+    if (selectedStore) {
+      form.setFieldsValue({ storeId: selectedStore.id });
+    }
+  };
 
   return (
     <Modal
       visible={visible}
-      title="Add Inventory"
-      okText="Create"
+      title={initialValues ? "Modify Inventory" : "Add Inventory"}
+      okText={initialValues ? "Update" : "Create"}
       cancelText="Cancel"
-      onCancel={onCancel}
+      onCancel={() => {
+        form.resetFields(); // Reset form on cancel
+        onCancel();
+      }}
       onOk={() => {
         form
           .validateFields()
@@ -28,6 +48,21 @@ const InventoryForm = ({ visible, onCreate, onCancel }) => {
         layout="vertical"
         name="form_in_modal"
       >
+      <Form.Item
+          name="storeAddress"
+          label="Change Store"
+          initialValue={initialValues?.store?.address}  // 设置默认值
+        >
+          <Select onChange={handleStoreChange}>
+            {storeInfo.map(store => (
+              <Option key={store.id} value={store.address}>
+                {store.address}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+
         <Form.Item
           name="sku"
           label="SKU"
@@ -42,7 +77,6 @@ const InventoryForm = ({ visible, onCreate, onCancel }) => {
         >
           <Input />
         </Form.Item>
-
         <Form.Item
           name="model"
           label="Model"
@@ -93,10 +127,19 @@ const InventoryForm = ({ visible, onCreate, onCancel }) => {
         >
           <Input />
         </Form.Item>
-
         <Form.Item
           name="cost"
           label="Cost"
+        >
+          <Input />
+        </Form.Item>
+
+        {/* 隐藏的 storeId 项 */}
+        <Form.Item
+          name="storeId"
+          label="Store ID"
+          hidden={true}
+          initialValue={initialValues?.store?.id}  // 设置默认值
         >
           <Input />
         </Form.Item>

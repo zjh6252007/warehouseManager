@@ -94,6 +94,7 @@ const Reports = () => {
     return total + profit;
   }, 0);
 
+  
   const cost = salesData.reduce((total,sale)=>{
     if (sale.type === 'Accessory') {
       return total;
@@ -105,6 +106,7 @@ const Reports = () => {
     }
     return total;
   },0)
+
   const salesBySalesperson = salesData.reduce((acc, sale) => {
     if (!acc[sale.salesperson]) {
       acc[sale.salesperson] = 0;

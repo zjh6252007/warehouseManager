@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile,addInventory} from '../redux/modules/inventory';
+import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile, addInventory } from '../redux/modules/inventory';
+import { getStore } from '../redux/modules/myStore';
 import { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
@@ -13,19 +14,22 @@ import { message } from 'antd';
 
 const Inventory = () => {
   const userInfo = useSelector(state => state.user.userInfo);
+  const storeInfo = useSelector(state=>state.myStore.storeList);
   const dispatch = useDispatch();
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
   const { storeId } = useParams();
   const [selectedRows, setSelectedRows] = useState([]);
-  const [inventoryFormVisible,setInventoryFormVisible] = useState(false);
+  const [inventoryFormVisible, setInventoryFormVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+  const [editingInventory, setEditingInventory] = useState(null);
+  console.log(storeInfo)
   useEffect(() => {
     if (isStorePage) {
       dispatch(getInventoryById(storeId));
     } else if (userInfo.role === 'admin') {
       dispatch(getAllInventory());
+      dispatch(getStore());
     } else {
       dispatch(getInventory());
     }
@@ -74,9 +78,10 @@ const Inventory = () => {
           : '$0.00'
       )
     },
-    { field: 'product', headerName: 'Product', width: 150 }
+    { field: 'product', headerName: 'Product', width: 150 },
   ];
-  
+
+  // Add cost and modify button for admin users
   if (userInfo.role === 'admin') {
     columns.push({
       field: 'cost', headerName: 'Cost', width: 100,
@@ -86,23 +91,40 @@ const Inventory = () => {
           : '$0.00'
       )
     });
+
+    columns.push({
+      field: 'modify',
+      headerName: 'Modify',
+      width: 150,
+      renderCell: (params) => (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => handleModify(params.row)}
+        >
+          Modify
+        </Button>
+      ),
+    });
   }
 
-  const onCancel = () =>{
+  const onCancel = () => {
     setInventoryFormVisible(false);
-  }
-  const onCreate = async(values) => {
-    const newInventory={
+    setEditingInventory(null);
+  };
+
+  const onCreate = async (values) => {
+    const inventoryData = {
       ...values,
       store: { id: parseInt(storeId, 10) }
     };
-    try{
-    await dispatch(addInventory(newInventory));
-    onCancel();
-    message.success("Successfully added inventory!");
-    
-    }catch(error){
-      console.error('Failed to add Inventory:',error);
+
+    try {
+      await dispatch(addInventory(inventoryData));
+      message.success("Successfully added inventory!");
+      onCancel();
+    } catch (error) {
+      console.error('Failed to add inventory:', error);
     }
   };
 
@@ -123,10 +145,15 @@ const Inventory = () => {
     dispatch(deleteInventory(selectedRows));
   };
 
+  const handleModify = (row) => {
+    setEditingInventory(row); // Set the current row data to the form
+    setInventoryFormVisible(true);
+  };
+
   const inventoryData = useSelector(state => state.inventory.inventoryList);
 
   const handleDownload = () => {
-    const dataToExport = inventoryData.map(({ limitPercentage, qty,unitWeight,store, ...rest }) => rest);
+    const dataToExport = inventoryData.map(({ limitPercentage, qty, unitWeight, store, ...rest }) => rest);
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -139,11 +166,9 @@ const Inventory = () => {
     document.body.removeChild(link);
   };
 
-
-
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
-      {userInfo.role === 'admin' &&(<InventoryToolbar numSelected={selectedRows.length} onDelete={()=>handleDelete()} />)}
+      {userInfo.role === 'admin' && (<InventoryToolbar numSelected={selectedRows.length} onDelete={() => handleDelete()} />)}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
         {isStorePage && (
           <Button
@@ -159,31 +184,29 @@ const Inventory = () => {
               onChange={handleFileChange}
             />
           </Button>
+        )}
 
-          
+        {userInfo.role === 'admin' && (
+          <Button
+            variant="contained"
+            onClick={handleDownload}
+            sx={{ ml: 2 }}
+          >
+            Download Inventory
+          </Button>
         )}
-        
-        {userInfo.role === 'admin' &&(
-        <Button
-          variant="contained"
-          onClick={handleDownload}
-          sx={{ ml: 2 }}
-        >
-          Download Inventory
-        </Button>
-        )}
-        
-        {isStorePage &&(
-        <Button
-          variant="contained"
-          sx={{ ml: 2 }}
-          onClick={()=>setInventoryFormVisible(true)}
-        >
-          Add Inventory
-        </Button>
+
+        {isStorePage && (
+          <Button
+            variant="contained"
+            sx={{ ml: 2 }}
+            onClick={() => setInventoryFormVisible(true)}
+          >
+            Add Inventory
+          </Button>
         )}
       </Box>
-      {selectedRows.length > 0 && userInfo.role === 'admin' &&(
+      {selectedRows.length > 0 && userInfo.role === 'admin' && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
           <Button variant="contained" color="error" onClick={handleDelete}>
             Delete Selected
@@ -210,11 +233,13 @@ const Inventory = () => {
         }}
         isRowSelectable={(params) => params.row.status !== 'sold'}
       />
-        <InventoryForm
-        visible={inventoryFormVisible}
-        onCreate={onCreate}
-        onCancel={() => setInventoryFormVisible(false)}
-      />
+<InventoryForm
+  visible={inventoryFormVisible}
+  onCreate={onCreate}
+  onCancel={onCancel}
+  initialValues={editingInventory}  // 将 editingInventory 作为 initialValues 传递
+  storeInfo={storeInfo}  // 传递 storeInfo 数据
+/>
     </Box>
   );
 };
