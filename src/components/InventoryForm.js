@@ -79,7 +79,6 @@ const InventoryForm = ({ visible, onCreate, onCancel, initialValues, storeInfo }
           label="SKU"
           rules={[{ required: true, message: 'Please input the SKU!' }]}
         >
-          <Input readOnly /> 
         </Form.Item>
 
         <Form.Item
