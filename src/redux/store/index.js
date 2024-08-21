@@ -5,6 +5,8 @@ import myStoreReducer from "../modules/myStore";
 import cartReducer from "../modules/cart";
 import salesReducer from "../modules/sales";
 import deliveryReducer from "../modules/delivery";
+import returnLogReducer from "../modules/returnLog";
+
 
 const store = configureStore({
     reducer:{
@@ -14,6 +16,7 @@ const store = configureStore({
         cart:cartReducer,
         sales:salesReducer,
         delivery:deliveryReducer,
+        returnLog:returnLogReducer
     }
 })
 

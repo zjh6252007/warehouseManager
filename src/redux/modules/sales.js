@@ -71,10 +71,11 @@ const getSalesByDate =(date,storeId) =>async(dispatch) =>{
         console.log(error)
     }
 }
-const returnSales = (returnList,storeId) =>async(dispatch)=>{
+const returnSales = (returnList,storeId,userId) =>async(dispatch)=>{
     try{
-        const res = await request.delete(`/api/sales/return`,{
-            data:returnList
+        const res = await request.post(`/api/sales/return`,{
+                returnList,
+                userId
         });
         dispatch(getSalesByStoreId(storeId));
         return res;

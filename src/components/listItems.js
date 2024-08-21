@@ -192,6 +192,14 @@ export default function MainListItems({isShowStore,onItemClick}){
       </ListItemIcon>
       <ListItemText primary="Sales" />
     </ListItemButton>
+
+    <ListItemButton component={Link} to={`/store/mystore/return/${store_id}`} onClick={()=>onItemClick("Sales")}>
+      <ListItemIcon>
+        <BarChartIcon />
+      </ListItemIcon>
+      <ListItemText primary="Return Item" />
+    </ListItemButton>
+
     <ListItemButton component={Link} to={`/store/mystore/delivery/${store_id}`} onClick={()=>onItemClick("Delivery")}>
       <ListItemIcon>
         <LocalShippingIcon />

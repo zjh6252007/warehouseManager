@@ -117,29 +117,24 @@ const Inventory = () => {
   };
 
   const onCreate = async (values) => {
-    const isStoreChanged = editingInventory?.store?.id !== values.storeId; // 使用 editingInventory
+    const isStoreChanged = editingInventory?.store?.id !== values.storeId; 
     const inventoryData = {
       ...values,
-      store: { id: values.storeId }  // 构造 store 对象
+      store: { id: values.storeId } 
     };
   
     try {
       if (!isStoreChanged) {
-        // 如果 Store 没有变化，只是修改商品
-        await dispatch(deleteInventory([editingInventory.id])); // 使用 editingInventory.id
+        await dispatch(deleteInventory([editingInventory.id])); 
         await dispatch(addInventory(inventoryData));
       } else {
-        // 如果 Store 发生了变化
         try {
-          // 先尝试添加新的库存，如果 SKU 存在则会抛出错误
           await dispatch(addInventory(inventoryData));
-          // 如果成功，删除旧的库存
-          await dispatch(deleteInventory([editingInventory.id])); // 使用 editingInventory.id
+          await dispatch(deleteInventory([editingInventory.id])); 
         } catch (error) {
-          // 如果添加失败（例如 SKU 已存在）
           console.error('Failed to add inventory:', error);
           message.error('Failed to add inventory: SKU may already exist in the target store.');
-          return;  // 终止流程
+          return;  
         }
       }
       message.success("Inventory successfully modified!");

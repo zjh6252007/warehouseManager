@@ -10,6 +10,7 @@ import Reports from "../pages/Reports";
 import Profile from "../pages/Profile";
 import StoreSetting from "../pages/StoreSetting";
 import Delivery from "../pages/Delivery";
+import ReturnLog from "../pages/ReturnLog";
 const router = createBrowserRouter([
     {
     path:"/",
@@ -62,6 +63,10 @@ const router = createBrowserRouter([
         {
             path:"/store/mystore/delivery/:storeId",
             element:<Delivery/>
+        },
+        {
+            path:"/store/mystore/return/:storeId",
+            element:<ReturnLog/>
         }
     ]
     },

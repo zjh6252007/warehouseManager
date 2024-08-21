@@ -27,7 +27,6 @@ export default function Sales() {
 
   const userInfo = useSelector(state => state.user.userInfo);
   const { storeId } = useParams();
-
   useEffect(() => {
     if (userInfo.role === 'user') {
       dispatch(getSalesByStoreId(userInfo.storeId));
@@ -171,9 +170,9 @@ export default function Sales() {
 
   const handleReturnItems = (selectedItems) => {
     if (storeId) {
-      dispatch(returnSales(selectedItems, storeId));
+      dispatch(returnSales(selectedItems, storeId,userInfo.id));
     } else {
-      dispatch(returnSales(selectedItems, userInfo.storeId));
+      dispatch(returnSales(selectedItems, userInfo.storeId,userInfo.id));
     }
     handleCloseReturn();
   };
@@ -244,9 +243,9 @@ export default function Sales() {
       render: (_, record) => (
         <Space size="middle">
           <Button type="link" onClick={() => handleOpenAccessory(record)}>Add Accessory</Button>
+          <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
           {userInfo.role !== 'user' &&(
             <>
-          <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
           <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
             </>
           )}
