@@ -323,7 +323,6 @@ const ProductForm = ({handleClose}) =>{
                 addonBefore: '$',
                 type:'number'
             }}
-            disabled={true}
         />
 
         <ProFormSelect
