@@ -4,7 +4,7 @@ import { getToken,deleteToken } from "./token"
 //http://localhost:8080
 const request = axios.create({
     baseURL:'https://warehouse-eycbahh2a8dwgud5.eastus-01.azurewebsites.net',
-    timeout: 5000
+    timeout: 50000
 })
 
 request.interceptors.request.use((config)=>{
