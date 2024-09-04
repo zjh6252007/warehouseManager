@@ -234,7 +234,7 @@ const ProductForm = ({handleClose}) =>{
                         warrantyPrice: (item.warrantyPrice||0) * (Number(item.extendedwarranty)||0),
                         taxes: totaltax,
                         deliveryFee:customerData.deliveryFee,
-                        deliveryDate: customerData.deliveryDate ? moment(item.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null,
+                        deliveryDate: customerData.deliveryDate ? moment(customerData.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null,
                         discount:customerData.discount,
                         note:customerData.note,
                         paymentType:customerData.paymentType
