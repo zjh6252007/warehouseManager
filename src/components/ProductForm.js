@@ -345,7 +345,7 @@ const ProductForm = ({handleClose}) =>{
             label="Free Warranty"
             width='30%'
             placeholder="warranty"
-            initialValue={2}
+            initialValue={1}
             fieldProps={{
                 addonAfter:'year',
                 type:'number'
