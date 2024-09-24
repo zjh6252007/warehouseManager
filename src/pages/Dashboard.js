@@ -261,25 +261,20 @@ export default function Dashboard() {
             overflow: 'auto',
           }}
         >
-          {/* Spacer for AppBar */}
           <Toolbar />
-          {/* Content Container */}
-          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Grid container spacing={3}>
-              {/* Nested Routes will render here */}
-              <Outlet />
-            </Grid>
-            {/* Footer */}
-            <Divider sx={{ mt: 4 }} />
-            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
-              {'Copyright © '}
-              <Link color="inherit">
-                WL APPLIANCES
-              </Link>{' '}
-              {new Date().getFullYear()}
-              {'.'}
-            </Typography>
-          </Container>
+          <Container
+  maxWidth={false} // This allows the container to take full width
+  sx={{
+    mt: 2,
+    mb: 2,
+    px: isMobile ? 2 : 4, // You can adjust this padding if needed
+  }}
+>
+  <Grid container spacing={1}>
+    <Outlet />
+  </Grid>
+  <Copyright sx={{ pt: 4 }} />
+</Container>
         </Box>
       </Box>
     </ThemeProvider>

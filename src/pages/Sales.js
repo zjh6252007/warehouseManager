@@ -467,13 +467,13 @@ export default function Sales() {
               {
                 validator:(_,value)=>{
                   const amount = parseFloat(value);
-                  if (isNaN(amount) || amount <= 0) {
-                    return Promise.reject(new Error('Pay Amount must be greater than 0.'));
-                  }
-                  if (amount > selectedRecord.remainBalance) {
-                    return Promise.reject(new Error('Pay Amount cannot exceed Amount Due.'));
-                  }
-                  return Promise.resolve();
+                                      if (isNaN(amount) || amount <= 0) {
+                      return Promise.reject(new Error('Pay Amount must be greater than 0.'));
+                    }
+                    if (amount > selectedRecord.remainBalance) {
+                      return Promise.reject(new Error('Pay Amount cannot exceed Amount Due.'));
+                    }
+                    return Promise.resolve();
                 }
               }
             ]}>
