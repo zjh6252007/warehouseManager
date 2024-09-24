@@ -1,5 +1,5 @@
 import { Button, message, Descriptions} from 'antd';
-import {ProFormText,ProFormSelect, StepsForm, ProForm, ProFormDatePicker} from '@ant-design/pro-components';
+import {ProFormText,ProFormSelect, StepsForm, ProForm, ProFormDatePicker,ProFormCheckbox,ProFormDependency} from '@ant-design/pro-components';
 import { useDispatch, useSelector } from 'react-redux';
 import React, { useRef } from 'react';
 import { useState } from 'react';
@@ -138,9 +138,9 @@ const ProductForm = ({handleClose}) =>{
 
     const calculateTotalPrice = (customer, cart) => {
         let totalPrice = cart.reduce((total, item) => {
-            let itemTotal = parseFloat(item.price);
+            let itemTotal = parseFloat(item.price) || 0;
             if (item.extendedwarranty > 0 && item.warrantyPrice && !isNaN(parseFloat(item.warrantyPrice))) {
-                itemTotal += parseFloat(item.warrantyPrice*item.extendedwarranty);
+                itemTotal += parseFloat(item.warrantyPrice) * parseFloat(item.extendedwarranty);
             }
             if (!isNaN(parseFloat(item.deliveryFee))) {
                 itemTotal += parseFloat(item.deliveryFee);
@@ -157,16 +157,15 @@ const ProductForm = ({handleClose}) =>{
         }
     
         const _taxRate = taxRate || store_info.taxRate;
+        let calculatedTax = 0;
         if (_taxRate) {
-            totaltax = totalPrice * _taxRate * 0.01;
-            totalPrice += totaltax;
-        } else {
-            totaltax = 0;
+            calculatedTax = totalPrice * _taxRate * 0.01;
+            totalPrice += calculatedTax;
         }
     
-        return totalPrice;
+        return { totalPrice, calculatedTax };
     };
-
+    
     const renderProductDescriptions = (item) => {
         return(
         <Descriptions bordered>
@@ -181,28 +180,26 @@ const ProductForm = ({handleClose}) =>{
         )
     };
 
-    const renderOtherDescriptions = (customer,cart) =>{
-        let totalPrice = calculateTotalPrice(customer,cart);
-        const _taxRate = taxRate||store_info.taxRate;
-        return(
-        <Descriptions bordered style={{marginBottom:15}}>
-            <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
-            <Descriptions.Item label="Address">{customer.address}</Descriptions.Item>
-            <Descriptions.Item label="Phone">{customer.contact||'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Sales">{customer.sales||'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Delivery Date">{customer.deliveryDate||'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Delivery Fee">${customer.deliveryFee||'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Discount">${customer.discount||'0'}</Descriptions.Item>
-            {_taxRate &&(
-            <Descriptions.Item label="Tax">${(totaltax).toFixed(2)}</Descriptions.Item>
-            )
-            }
-            <Descriptions.Item label="Total Price" style={{color:'red'}}>${(totalPrice).toFixed(2)}</Descriptions.Item>
-
-        </Descriptions>
+    const renderOtherDescriptions = (customer, cart) => {
+        const { totalPrice, calculatedTax } = calculateTotalPrice(customer, cart);
+    
+        return (
+            <Descriptions bordered style={{ marginBottom: 15 }}>
+                <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
+                <Descriptions.Item label="Address">{customer.address}</Descriptions.Item>
+                <Descriptions.Item label="Phone">{customer.contact || 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Sales">{customer.sales || 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Delivery Date">{customer.deliveryDate || 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Delivery Fee">${customer.deliveryFee || 'N/A'}</Descriptions.Item>
+                <Descriptions.Item label="Discount">${customer.discount || '0'}</Descriptions.Item>
+                {calculatedTax > 0 && (
+                    <Descriptions.Item label="Tax">${calculatedTax.toFixed(2)}</Descriptions.Item>
+                )}
+                <Descriptions.Item label="Total Price" style={{ color: 'red' }}>${totalPrice.toFixed(2)}</Descriptions.Item>
+            </Descriptions>
         );
-    }
-
+    };
+    
     const validateUnitPrice = (_, value) => {
         if (selectedModel) {
             const minPrice = selectedModel.unitRetail * selectedModel.limitPercentage * 0.01;
@@ -218,42 +215,54 @@ const ProductForm = ({handleClose}) =>{
         <StepsForm
             current={currentStep}
             formRef={formRef}
-            onFinish={async()=>{
-                const finalData={
-                    cart:cartList.map(item=>({
-                        storeId:store_info.id,
-                        model: item.model,
-                        price: item.price,
-                        type: item.type,
-                        customer: customerData.customer,
-                        contact: customerData.contact,
-                        address: customerData.address,
-                        serialNumber: item.serialNumber,
-                        salesperson: customerData.sales,
-                        warranty: (Number(item.freewarranty)||0) + (Number(item.extendedwarranty)||0),
-                        warrantyPrice: (item.warrantyPrice||0) * (Number(item.extendedwarranty)||0),
-                        taxes: totaltax,
-                        deliveryFee:customerData.deliveryFee,
-                        deliveryDate: customerData.deliveryDate ? moment(customerData.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null,
-                        discount:customerData.discount,
-                        note:customerData.note,
-                        paymentType:customerData.paymentType
-                    }))
-                };
-                try{
-                const res = await dispatch(postSales(finalData));
-                if(res.code === 0){
-                formRef.current?.resetFields();
-                dispatch(clearCart());
-                handleClose();
-                message.success("Submitted Success");
-                }else{
-                    message.error(res.message);
-                }
-                }catch(error){
-                    console.error(error);
-                }
-            }}
+onFinish={async () => {
+    const { totalPrice, calculatedTax } = calculateTotalPrice(customerData, cartList);
+    const totalAmount = totalPrice;
+    const paidAmount = customerData.paidAmount ? Number(customerData.paidAmount) : 0;
+    const remainBalance = paidAmount > 0 ? totalAmount - paidAmount : 0;
+
+    console.log('Paid Amount', paidAmount);
+    console.log('Remain Balance:', remainBalance);
+
+    const finalData = {
+        cart: cartList.map(item => ({
+            storeId: store_info.id,
+            model: item.model,
+            price: item.price,
+            type: item.type,
+            customer: customerData.customer,
+            contact: customerData.contact,
+            address: customerData.address,
+            serialNumber: item.serialNumber,
+            salesperson: customerData.sales,
+            warranty: (Number(item.freewarranty) || 0) + (Number(item.extendedwarranty) || 0),
+            warrantyPrice: (item.warrantyPrice || 0) * (Number(item.extendedwarranty) || 0),
+            taxes: calculatedTax,
+            deliveryFee: customerData.deliveryFee,
+            deliveryDate: customerData.deliveryDate ? moment(customerData.deliveryDate).format('YYYY-MM-DDTHH:mm:ss') : null,
+            discount: customerData.discount,
+            note: customerData.note,
+            paymentType: customerData.paymentType,
+            remainBalance: remainBalance,
+        }))
+    };
+
+    console.log(finalData);
+    try {
+        const res = await dispatch(postSales(finalData));
+        if (res.code === 0) {
+            formRef.current?.resetFields();
+            dispatch(clearCart());
+            handleClose();
+            message.success("Submitted Success");
+        } else {
+            message.error(res.message);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}}
+
             formProps={{
                 validateMessages:{
                     required:''
@@ -467,6 +476,7 @@ const ProductForm = ({handleClose}) =>{
     name="paymentType"
     label="Payment Type"
     placeholder="Select a payment type"
+    rules={[{required:true}]}
     options={[
       {value:' ',label:' '},
       { value: 'cash', label: 'Cash' },
@@ -476,6 +486,43 @@ const ProductForm = ({handleClose}) =>{
       { value: 'snap', label: 'Snap' },
     ]}
   />
+
+    <ProFormCheckbox
+        name="paidInFull"
+        label="Paid in Full"
+        initialValue={true}
+      />
+
+<ProFormDependency name={['paidInFull']}>
+        {({ paidInFull }) =>
+          !paidInFull ? (
+            <ProFormText
+              name="paidAmount"
+              label="Paid Amount"
+              placeholder="Enter paid amount"
+              rules={[
+                { required: true, message: 'Please enter the paid amount' },
+                {
+                  validator: (_, value) => {
+                    if (value && Number(value) > 0) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Amount must be greater than 0'));
+                  },
+                },
+              ]}
+              fieldProps={{
+                addonBefore: '$',
+                type: 'number',
+                min: 0.01,
+                step: 0.01,
+              }}
+              width="sm"
+            />
+          ) : null
+        }
+      </ProFormDependency>
+
 
     <ProForm.Group>
     <ProFormText

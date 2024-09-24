@@ -1,16 +1,22 @@
 import * as React from 'react';
-import { Table, Space, Modal, Input, Button, Form, Checkbox, Select,DatePicker } from 'antd';
+import { Table, Space, Modal, Input, Button, Form, Checkbox, Select, DatePicker, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
-import { getSalesByStoreId, deleteSales, getAllSales, returnSales } from '../redux/modules/sales';
+import {
+  getSalesByStoreId,
+  deleteSales,
+  getAllSales,
+  returnSales,
+  clearSalesList,
+  addAccessory,
+  setReceipt
+} from '../redux/modules/sales';
 import { getUserInfo } from '../redux/modules/user';
 import { generateReceipt } from '../utils/generateReceipt';
 import { fetchStoreDetail } from '../redux/modules/myStore';
 import { useLocation, useParams } from 'react-router-dom';
 import ReturnModalContent from '../components/ReturnModalContent';
-import { clearSalesList } from '../redux/modules/sales';
 import { generateDeliveryOrder } from '../utils/generateDeliveryOrder';
-import { addAccessory,setReceipt} from '../redux/modules/sales';
 import moment from 'moment';
 
 const { Option } = Select;
@@ -27,6 +33,7 @@ export default function Sales() {
 
   const userInfo = useSelector(state => state.user.userInfo);
   const { storeId } = useParams();
+
   useEffect(() => {
     if (userInfo.role === 'user') {
       dispatch(getSalesByStoreId(userInfo.storeId));
@@ -37,7 +44,7 @@ export default function Sales() {
     } else if (userInfo.role === 'admin') {
       dispatch(getAllSales());
     }
-  }, [dispatch, userInfo.storeId, userInfo.role, storeId]);
+  }, [dispatch, userInfo.storeId, userInfo.role, storeId, isStorePage]);
 
   const salesInfo = useSelector(state => state.sales.salesList);
   const storeInfo = useSelector(state => state.myStore.currentStore);
@@ -46,10 +53,10 @@ export default function Sales() {
     if (!dateString) return 'Unknown Date';
     const date = moment(dateString);
     if (!date.isValid()) {
-        return 'Invalid Date';
+      return 'Invalid Date';
     }
     return date.format('MM/DD/YYYY');
-};
+  };
 
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [open, setOpen] = useState(false);
@@ -61,14 +68,14 @@ export default function Sales() {
   const [accessoryName, setAccessoryName] = useState("");
   const [accessoryPrice, setAccessoryPrice] = useState("");
 
-
   const [openReceiptModal, setOpenReceiptModal] = useState(false);
   const [paymentType, setPaymentType] = useState('');
   const [includeInstallation, setIncludeInstallation] = useState(false);
   const [installationFee, setInstallationFee] = useState('');
-  const [discount,setDiscount] = useState('');
-  const [note,setNote] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [note, setNote] = useState('');
   const [receiptDate, setReceiptDate] = useState(null);
+  const [payAmount, setPayAmount] = useState(''); // New state for Pay Amount
 
   const aggregatedData = React.useMemo(() => {
     const groupedData = {};
@@ -76,28 +83,38 @@ export default function Sales() {
       salesInfo.forEach((item) => {
         const key = `${item.store.id}-${item.invoiceNumber}`;
         if (!groupedData[key]) {
-          groupedData[key] = { ...item, total: 0, subtotal:0,totalTax: 0, items: [], deliveryFee: item.deliveryFee || 0,taxRate:0,totalAfterDiscount:0 };
+          groupedData[key] = {
+            ...item,
+            total: 0,
+            subtotal: 0,
+            totalTax: 0,
+            items: [],
+            deliveryFee: parseFloat(item.deliveryFee) || 0,
+            taxRate: 0,
+            totalAfterDiscount: 0
+          };
         }
-        groupedData[key].subtotal += item.price;
-        groupedData[key].total += item.price;
-        groupedData[key].total += item.warrantyPrice;
-        groupedData[key].total += item.taxes || 0;
-        groupedData[key].total -= item.discount || 0;
-        groupedData[key].total += item.installationFee || 0;
-        groupedData[key].totalTax += item.taxes || 0;
-        groupedData[key].items.push(item); 
+        groupedData[key].subtotal += parseFloat(item.price) || 0;
+        groupedData[key].total += parseFloat(item.price) || 0;
+        groupedData[key].total += parseFloat(item.warrantyPrice) || 0;
+        groupedData[key].total += parseFloat(item.taxes) || 0;
+        groupedData[key].total -= parseFloat(item.discount) || 0;
+        groupedData[key].total += parseFloat(item.installationFee) || 0;
+        groupedData[key].totalTax += parseFloat(item.taxes) || 0;
+        groupedData[key].items.push(item);
       });
     }
     return Object.values(groupedData).map(data => ({
       ...data,
-      total: data.total + data.deliveryFee,
-      taxRate: ((data.totalTax/data.subtotal)*100).toFixed(2)
+      total: parseFloat((data.total + parseFloat(data.deliveryFee)).toFixed(2)),
+      taxRate: data.subtotal > 0 ? ((data.totalTax / data.subtotal) * 100).toFixed(2) : '0.00'
     }));
   }, [salesInfo]);
 
   useEffect(() => {
     const filtered = aggregatedData.filter(item =>
-      item.invoiceNumber.includes(searchText) || (item.contact && item.contact.includes(searchText))||
+      item.invoiceNumber.includes(searchText) ||
+      (item.contact && item.contact.includes(searchText)) ||
       (item.customer && item.customer.toLowerCase().includes(searchText.toLowerCase()))
     );
     setFilteredData(filtered);
@@ -139,6 +156,14 @@ export default function Sales() {
     setDiscount(record.discount || '');
     setNote(record.note || '');
     setReceiptDate(record.createdAt ? moment(record.createdAt) : null);
+    
+    // Initialize payAmount only if remainBalance > 0
+    if (record.remainBalance > 0) {
+      setPayAmount(''); // Empty string for user input
+    } else {
+      setPayAmount(0); // Default to 0 when not needed
+    }
+    
     setOpenReceiptModal(true);
   };
 
@@ -147,6 +172,10 @@ export default function Sales() {
     setPaymentType('');
     setIncludeInstallation(false);
     setInstallationFee('');
+    setDiscount('');
+    setNote('');
+    setReceiptDate(null);
+    setPayAmount(''); // Reset payAmount
   };
 
   const handleReceipt = (record, storeInfo) => {
@@ -154,25 +183,42 @@ export default function Sales() {
   };
 
   const handleGenerateReceipt = () => {
+    // If remainBalance > 0, validate payAmount
+    if (selectedRecord.remainBalance > 0) {
+      const payAmt = parseFloat(payAmount);
+      if (isNaN(payAmt) || payAmt <= 0) {
+        message.error("Please enter a valid Pay Amount greater than 0.");
+        return;
+      }
+      
+      // Optional: Ensure payAmount does not exceed remainBalance
+      if (payAmt > selectedRecord.remainBalance) {
+        message.error("Pay Amount cannot exceed Amount Due.");
+        return;
+      }
+    }
+    
     const installationDiscountDTO = {
-      installation:includeInstallation,
-      paymentType:paymentType,
-      installationFee:installationFee,
-      discount:discount,
-      note:note,
-      storeId:selectedRecord.store.id,
-      invoiceNumber:selectedRecord.invoiceNumber,
-      createdAt:receiptDate
+      installation: includeInstallation,
+      paymentType: paymentType,
+      installationFee: parseFloat(installationFee) || 0,
+      discount: parseFloat(discount) || 0,
+      note: note,
+      storeId: selectedRecord.store.id,
+      invoiceNumber: selectedRecord.invoiceNumber,
+      createdAt: receiptDate,
+      payAmount: selectedRecord.remainBalance > 0 ? parseFloat(payAmount) : 0, // Include payAmount
     };
-    dispatch(setReceipt(installationDiscountDTO,selectedRecord.store.id))
+    
+    dispatch(setReceipt(installationDiscountDTO, selectedRecord.store.id));
     handleCloseReceiptModal();
   };
 
   const handleReturnItems = (selectedItems) => {
     if (storeId) {
-      dispatch(returnSales(selectedItems, storeId,userInfo.id));
+      dispatch(returnSales(selectedItems, storeId, userInfo.id));
     } else {
-      dispatch(returnSales(selectedItems, userInfo.storeId,userInfo.id));
+      dispatch(returnSales(selectedItems, userInfo.storeId, userInfo.id));
     }
     handleCloseReturn();
   };
@@ -180,19 +226,25 @@ export default function Sales() {
   const handleCancelOrder = (invoiceNumber, storeId) => {
     dispatch(deleteSales(invoiceNumber, storeId))
       .then(() => {
-        dispatch(getSalesByStoreId(storeId));
+        if (userInfo.role === 'user') {
+          dispatch(getSalesByStoreId(userInfo.storeId));
+        } else if (userInfo.role === 'admin' && isStorePage) {
+          dispatch(getSalesByStoreId(storeId));
+        } else if (userInfo.role === 'admin') {
+          dispatch(getAllSales());
+        }
         handleClose();
       });
   };
 
   const handleAddAccessory = () => {
     const accessoryDTO = {
-      storeId:selectedRecord.store.id,
-      invoiceNumber:selectedRecord.invoiceNumber,
-      price:accessoryPrice,
-      model:accessoryName
+      storeId: selectedRecord.store.id,
+      invoiceNumber: selectedRecord.invoiceNumber,
+      price: parseFloat(accessoryPrice) || 0, // Ensure it's a number
+      model: accessoryName
     };
-    dispatch(addAccessory(accessoryDTO,selectedRecord.store.id));
+    dispatch(addAccessory(accessoryDTO, selectedRecord.store.id));
     handleCloseAccessory();
   };
 
@@ -212,7 +264,7 @@ export default function Sales() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: formatDate,
-      defaultSortOrder: 'descend', 
+      defaultSortOrder: 'descend',
       sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
     },
     {
@@ -226,9 +278,13 @@ export default function Sales() {
       key: 'contact'
     },
     {
-      title: 'Sales Person',
-      dataIndex: 'salesperson',
-      key: 'salesperson'
+      title: 'Amount Due',
+      dataIndex: 'remainBalance',
+      key: 'remainBalance',
+      render: (value) => {
+        const amount = value ?? 0; // Corrected line using Nullish Coalescing Operator
+        return `$${parseFloat(amount).toFixed(2)}`;
+      },
     },
     {
       title: 'Total',
@@ -244,18 +300,15 @@ export default function Sales() {
         <Space size="middle">
           <Button type="link" onClick={() => handleOpenAccessory(record)}>Add Accessory</Button>
           <Button type="link" onClick={() => handleOpenReturn(record)}>Return</Button>
-          {userInfo.role !== 'user' &&(
-            <>
-          <Button type="link" onClick={() => handleOpen(record)}>Cancel</Button>
-            </>
-          )}
           <Button type="link" onClick={() => handleOpenReceiptModal(record)}>Set Up Receipt Info</Button>
-          <Button type="link" onClick={() => handleReceipt(record,storeInfo)}>Receipt</Button>
-          <Button type="link" onClick={() => generateDeliveryOrder(record,storeInfo)}>Delivery Form</Button>
+          <Button type="link" onClick={() => handleReceipt(record, storeInfo)}>Receipt</Button>
+          <Button type="link" onClick={() => generateDeliveryOrder(record, storeInfo)}>Delivery Form</Button>
         </Space>
       )
     }] : [])
   ];
+
+  console.log(aggregatedData);
 
   return (
     <div style={{ height: 400, width: '100%' }}>
@@ -266,10 +319,18 @@ export default function Sales() {
         style={{ marginBottom: 16 }}
       />
       <Table
-        rowKey={(record) => `${record.invoiceNumber}-${record.id}`}
+        rowKey={(record) => `${record.invoiceNumber}-${record.id}`} // Ensure uniqueness
         columns={columns}
         dataSource={filteredData}
+        onRow={(record) => ({
+          style: {
+            backgroundColor: record.remainBalance > 0 ? '#ffe6e6' : '', // Light red background
+            color: record.remainBalance > 0 ? '#a8071a' : '', // Dark red text
+          },
+        })}
       />
+      
+      {/* Cancel Order Modal */}
       <Modal
         title="Cancel Order"
         open={open}
@@ -282,6 +343,7 @@ export default function Sales() {
         </div>
       </Modal>
 
+      {/* Return Order Modal */}
       <Modal
         title="Return Order"
         open={openReturn}
@@ -292,6 +354,7 @@ export default function Sales() {
         <ReturnModalContent items={returnList} onReturn={handleReturnItems} />
       </Modal>
 
+      {/* Add Accessory Modal */}
       <Modal
         title="Add Accessory"
         open={openAccessory}
@@ -304,6 +367,7 @@ export default function Sales() {
             <Input
               value={accessoryName}
               onChange={e => setAccessoryName(e.target.value)}
+              placeholder="Enter accessory name"
             />
           </Form.Item>
           <Form.Item label="Price" required>
@@ -311,11 +375,15 @@ export default function Sales() {
               type="number"
               value={accessoryPrice}
               onChange={e => setAccessoryPrice(e.target.value)}
+              placeholder="Enter accessory price"
+              min={0}
+              addonBefore="$"
             />
           </Form.Item>
         </Form>
       </Modal>
 
+      {/* Generate Receipt Modal */}
       <Modal
         title="Generate Receipt"
         open={openReceiptModal}
@@ -325,7 +393,11 @@ export default function Sales() {
       >
         <Form>
           <Form.Item label="Payment Type" required>
-            <Select value={paymentType} onChange={value => setPaymentType(value)}>
+            <Select
+              value={paymentType}
+              onChange={value => setPaymentType(value)}
+              placeholder="Select Payment Type"
+            >
               <Option value="cash">Cash</Option>
               <Option value="card">Card</Option>
               <Option value="check">Check</Option>
@@ -337,18 +409,21 @@ export default function Sales() {
           <Form.Item label="Note">
             <Input
               value={note}
-              onChange={e=>setNote(e.target.value)}
-            >
-            </Input>
+              onChange={e => setNote(e.target.value)}
+              placeholder="Enter note"
+            />
           </Form.Item>
+          
           <Form.Item label="Receipt Date">
             <DatePicker
               onChange={(date) => setReceiptDate(date)}
               format="YYYY-MM-DDTHH:mm:ss"
               showTime
               value={receiptDate}
+              style={{ width: '100%' }}
             />
           </Form.Item>
+          
           <Form.Item>
             <Checkbox
               checked={includeInstallation}
@@ -357,12 +432,57 @@ export default function Sales() {
               Include Installation
             </Checkbox>
           </Form.Item>
+          
           {includeInstallation && (
             <Form.Item label="Installation Fee" required>
               <Input
                 type="number"
                 value={installationFee}
                 onChange={e => setInstallationFee(e.target.value)}
+                placeholder="Enter installation fee"
+                min={0}
+                addonBefore="$"
+              />
+            </Form.Item>
+          )}
+          
+          <Form.Item label="Discount">
+            <Input
+              type="number"
+              value={discount}
+              onChange={e => setDiscount(e.target.value)}
+              placeholder="Enter discount"
+              min={0}
+              addonBefore="$"
+            />
+          </Form.Item>
+          
+          {selectedRecord?.remainBalance > 0 && (
+            <Form.Item label="Pay Amount"
+            rules={[
+              {
+                type:'number',
+                transform:(value)=>parseFloat(value),
+              },
+              {
+                validator:(_,value)=>{
+                  const amount = parseFloat(value);
+                  if (isNaN(amount) || amount <= 0) {
+                    return Promise.reject(new Error('Pay Amount must be greater than 0.'));
+                  }
+                  if (amount > selectedRecord.remainBalance) {
+                    return Promise.reject(new Error('Pay Amount cannot exceed Amount Due.'));
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}>
+              <Input
+                type="number"
+                value={payAmount}
+                onChange={e => setPayAmount(e.target.value)}
+                placeholder="Enter pay amount"
+                min={0.01}
                 addonBefore="$"
               />
             </Form.Item>
