@@ -8,6 +8,7 @@ import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
 import InventoryToolbar from '../components/InventoryToolBar';
 import { deleteInventory } from '../redux/modules/inventory';
+import { generatePriceTag } from '../utils/generatePriceTag';
 import InventoryForm from '../components/InventoryForm';
 import Papa from 'papaparse';
 import { message } from 'antd';
@@ -168,7 +169,8 @@ const Inventory = () => {
   };
 
   const inventoryData = useSelector(state => state.inventory.inventoryList);
-
+  const selectedData = inventoryData.filter(item => selectedRows.includes(item.id));
+  
   const handleDownload = () => {
     const dataToExport = inventoryData.map(({ limitPercentage, qty, unitWeight, store, ...rest }) => rest);
     const csv = Papa.unparse(dataToExport);
@@ -224,11 +226,15 @@ const Inventory = () => {
         )}
       </Box>
       {selectedRows.length > 0 && userInfo.role === 'admin' && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap:2, marginBottom: 2 }}>
           <Button variant="contained" color="error" onClick={handleDelete}>
             Delete Selected
           </Button>
-        </Box>
+
+          <Button variant="contained" color="success" onClick={()=>generatePriceTag(selectedData)}>
+            Print price tag
+          </Button>
+        </Box> 
       )}
       <DataGrid
         rows={inventoryData.map(item => ({ ...item, id: item.id }))}
