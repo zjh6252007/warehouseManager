@@ -19,7 +19,7 @@ const ProductForm = ({handleClose}) =>{
     const isStorePage = location.pathname.includes('/mystore');
     const {storeId} = useParams();
     const user_info = useSelector(state=>state.user.userInfo);
-
+    const [isSubmitting,setIsSubmitting] = useState(false);
     useEffect(() => {
         if (isStorePage) {
             dispatch(fetchStoreDetail(storeId));
@@ -216,14 +216,12 @@ const ProductForm = ({handleClose}) =>{
             current={currentStep}
             formRef={formRef}
 onFinish={async () => {
+    if(isSubmitting) return;
+    setIsSubmitting(true);
     const { totalPrice, calculatedTax } = calculateTotalPrice(customerData, cartList);
     const totalAmount = totalPrice;
     const paidAmount = customerData.paidAmount ? Number(customerData.paidAmount) : 0;
     const remainBalance = paidAmount > 0 ? totalAmount - paidAmount : 0;
-
-    console.log('Paid Amount', paidAmount);
-    console.log('Remain Balance:', remainBalance);
-
     const finalData = {
         cart: cartList.map(item => ({
             storeId: store_info.id,
@@ -246,8 +244,6 @@ onFinish={async () => {
             remainBalance: remainBalance,
         }))
     };
-
-    console.log(finalData);
     try {
         const res = await dispatch(postSales(finalData));
         if (res.code === 0) {
@@ -260,6 +256,8 @@ onFinish={async () => {
         }
     } catch (error) {
         console.error(error);
+    }finally{
+        setIsSubmitting(false);
     }
 }}
 
@@ -283,6 +281,7 @@ onFinish={async () => {
                       key="next"
                       type="primary"
                       onClick={handleNext}
+                      disabled={isSubmitting}
                     >
                       {isLastStep ? "Submit" : "Next"}
                     </Button>,
