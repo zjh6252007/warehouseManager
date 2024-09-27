@@ -37,7 +37,15 @@ const Inventory = () => {
 
   const columns = [
     { field: 'itemDescription', headerName: 'Item Description', width: 250 },
-    { field: 'location', headerName: 'Location', width: 200 },
+    { 
+      field: 'uploadDate', 
+      headerName: 'Upload Date', 
+      width: 200,
+      renderCell: (params) => {
+        if (!params.value) return '';
+        return params.value.split('T')[0];
+      }
+    },
     { field: 'brand', headerName: 'Brand', width: 120 },
     { field: 'model', headerName: 'Model', width: 130 },
     {
@@ -242,6 +250,9 @@ const Inventory = () => {
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 18 },
+          },
+          sorting: {
+            sortModel: [{ field: 'uploadDate', sort: 'desc' }],
           },
         }}
         pageSize={18}
