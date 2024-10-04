@@ -309,8 +309,6 @@ export default function Sales() {
     }] : [])
   ];
 
-  console.log(aggregatedData);
-
   return (
     <div style={{ height: 400, width: '100%' }}>
       <Input

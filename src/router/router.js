@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter,Navigate } from "react-router-dom";
 import Guard from "./guard";
 import SignIn from "../pages/login";
 import Dashboard from "../pages/Dashboard";
@@ -16,6 +16,10 @@ const router = createBrowserRouter([
     path:"/",
     element:<Guard><Dashboard/></Guard>,
     children:[
+        {
+            path: "/", 
+            element: <Navigate to="/sales" />
+          },
         {
             path:"/inventory",
             element:<Inventory/>
