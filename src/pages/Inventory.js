@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile, addInventory } from '../redux/modules/inventory';
+import { getAllInventory, getInventory, getInventoryById, uploadInventoryFile, addInventory, deleteInventory } from '../redux/modules/inventory';
 import { getStore } from '../redux/modules/myStore';
 import { useEffect, useState } from 'react';
 import { Button, Box, CircularProgress } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
 import InventoryToolbar from '../components/InventoryToolBar';
-import { deleteInventory } from '../redux/modules/inventory';
 import { generatePriceTag } from '../utils/generatePriceTag';
 import InventoryForm from '../components/InventoryForm';
 import Papa from 'papaparse';
@@ -15,7 +14,7 @@ import { message } from 'antd';
 
 const Inventory = () => {
   const userInfo = useSelector(state => state.user.userInfo);
-  const storeInfo = useSelector(state=>state.myStore.storeList);
+  const storeInfo = useSelector(state => state.myStore.storeList);
   const dispatch = useDispatch();
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
@@ -24,6 +23,7 @@ const Inventory = () => {
   const [inventoryFormVisible, setInventoryFormVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingInventory, setEditingInventory] = useState(null);
+
   useEffect(() => {
     if (isStorePage) {
       dispatch(getInventoryById(storeId));
@@ -49,7 +49,9 @@ const Inventory = () => {
     { field: 'brand', headerName: 'Brand', width: 120 },
     { field: 'model', headerName: 'Model', width: 130 },
     {
-      field: 'status', headerName: 'Status', width: 130,
+      field: 'status',
+      headerName: 'Status',
+      width: 130,
       renderCell: (params) => (
         <div
           style={{
@@ -71,7 +73,9 @@ const Inventory = () => {
     { field: 'category', headerName: 'Category', width: 160 },
     { field: 'subcategory', headerName: 'Subcategory', width: 220 },
     {
-      field: 'unitRetail', headerName: 'Sale Price', width: 130,
+      field: 'unitRetail',
+      headerName: 'Sale Price',
+      width: 130,
       renderCell: (params) => (
         params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
@@ -79,7 +83,9 @@ const Inventory = () => {
       )
     },
     {
-      field: 'extRetail', headerName: 'Unit Retail', width: 130,
+      field: 'extRetail',
+      headerName: 'Unit Retail',
+      width: 130,
       renderCell: (params) => (
         params.value !== null && params.value !== undefined && !isNaN(params.value)
           ? `$${params.value.toFixed(2)}`
@@ -87,9 +93,15 @@ const Inventory = () => {
       )
     },
     { field: 'product', headerName: 'Product', width: 150 },
+    // 新增的 Location 列
+    {
+      field: 'location',
+      headerName: 'Location',
+      width: 300, // 根据需要调整宽度
+    },
   ];
 
-  // Add cost and modify button for admin users
+  // 为 admin 用户添加 cost 和 modify 列
   if (userInfo.role === 'admin') {
     columns.push({
       field: 'cost', 
@@ -172,15 +184,24 @@ const Inventory = () => {
   };
 
   const handleModify = (row) => {
-    setEditingInventory(row); // Set the current row data to the form
+    setEditingInventory(row); // 设置当前行数据到表单
     setInventoryFormVisible(true);
   };
 
   const inventoryData = useSelector(state => state.inventory.inventoryList);
+  const processedInventoryData = inventoryData.map(item => ({
+    ...item,
+    id: item.id, // 确保每一行都有唯一的 id
+    location: item.store?.address || 'N/A', // 如果没有地址，显示 'N/A' 或其他占位符
+  }));
   const selectedData = inventoryData.filter(item => selectedRows.includes(item.id));
-  
+  console.log(processedInventoryData);
+
   const handleDownload = () => {
-    const dataToExport = inventoryData.map(({ limitPercentage, qty, unitWeight, store, ...rest }) => rest);
+    const dataToExport = inventoryData.map(({ limitPercentage, qty, unitWeight, store, ...rest }) => ({
+      ...rest,
+      location: store?.address || 'N/A', // 确保导出的数据中也包含 location
+    }));
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -245,7 +266,7 @@ const Inventory = () => {
         </Box> 
       )}
       <DataGrid
-        rows={inventoryData.map(item => ({ ...item, id: item.id }))}
+        rows={processedInventoryData}
         columns={columns}
         initialState={{
           pagination: {
@@ -267,13 +288,13 @@ const Inventory = () => {
         }}
         isRowSelectable={(params) => params.row.status !== 'sold'}
       />
-<InventoryForm
-  visible={inventoryFormVisible}
-  onCreate={onCreate}
-  onCancel={onCancel}
-  initialValues={editingInventory}  // 将 editingInventory 作为 initialValues 传递
-  storeInfo={storeInfo}  // 传递 storeInfo 数据
-/>
+      <InventoryForm
+        visible={inventoryFormVisible}
+        onCreate={onCreate}
+        onCancel={onCancel}
+        initialValues={editingInventory}  // 将 editingInventory 作为 initialValues 传递
+        storeInfo={storeInfo}  // 传递 storeInfo 数据
+      />
     </Box>
   );
 };

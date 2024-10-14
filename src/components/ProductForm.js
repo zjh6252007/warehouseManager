@@ -480,6 +480,7 @@ onFinish={async () => {
       {value:' ',label:' '},
       { value: 'cash', label: 'Cash' },
       { value: 'card', label: 'Card' },
+      { value: 'zelle',label: 'Zelle'},
       { value: 'check', label: 'Check' },
       { value: 'achima', label: 'Achima' },
       { value: 'snap', label: 'Snap' },
