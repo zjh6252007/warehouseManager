@@ -259,11 +259,15 @@ const Inventory = () => {
           <Button variant="contained" color="error" onClick={handleDelete}>
             Delete Selected
           </Button>
-
-          <Button variant="contained" color="success" onClick={()=>generatePriceTag(selectedData)}>
-            Print price tag
-          </Button>
         </Box> 
+      )}
+
+      {selectedRows.length > 0 &&(
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap:2, marginBottom: 2 }}>
+                <Button variant="contained" color="success" onClick={()=>generatePriceTag(selectedData)}>
+                  Print price tag
+                </Button>
+              </Box> 
       )}
       <DataGrid
         rows={processedInventoryData}
