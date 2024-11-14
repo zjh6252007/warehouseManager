@@ -32,7 +32,7 @@ const getBase64ImageFromURL = (url) => {
 const generateReceipt = async(orderInfo,companyInfo) =>{
 const pdf= new jsPDF();
 const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items,paymentType,installationFee,discount,note,subtotal} = orderInfo;
-const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
+const {address:storeAddress,phone,storeName,qrcode,storeLogo} = companyInfo;
 const formattedDate = moment(createdAt).format('MM/DD/YYYY'); 
     const totalPages = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
@@ -45,9 +45,12 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     }
 
     const imgData = await getBase64ImageFromURL('/google_review.png');
+    console.log(storeLogo)
+    if(storeLogo != 0){
     const logo = await getBase64ImageFromURL('/wlAppliance.png');
     pdf.addImage(imgData, 'PNG', 100, 10, 25, 25); 
     pdf.addImage(logo,'PNG',0,0,15,15)
+    }
     if(qrcode !== null){
     const qrCodeData = await generateQRCode(qrcode);
     pdf.addImage(qrCodeData, 'PNG', 130, 10, 25, 25); // Adjust the position and size as needed
@@ -88,9 +91,8 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.text(`Installation Fee: $${installationFee||'0'}`,130,73)
     pdf.setFontSize(13);
     pdf.text("Model",18,83);
-    pdf.text("Serial Number",45,83);
-    pdf.text("Type",85,83);
-    pdf.text("Product Price",112,83);
+    pdf.text("Type",45,83);
+    pdf.text("Product Price",100,83);
     pdf.text("Warranty",145,83);
     pdf.text("Warranty Price",170,83);
 
@@ -99,9 +101,8 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.setFontSize(9);
     items.forEach(item=>{
         pdf.text(item.model,18,datacolum);
-        pdf.text(`${item.serialNumber||""}`,45,datacolum);
-        pdf.text(item.type,82,datacolum);
-        pdf.text(`$${item.price}`,115,datacolum);
+        pdf.text(item.type,45,datacolum);
+        pdf.text(`$${item.price}`,100,datacolum);
         pdf.text(`${item.warranty} Years`,145,datacolum);
         pdf.text(`$${item.warrantyPrice}`,170,datacolum);
         datacolum += 5;
