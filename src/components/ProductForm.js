@@ -484,33 +484,33 @@ const ProductForm = ({ handleClose }) => {
               }}
             />
 
-            <ProFormText
-              name="deliveryFee"
-              label="Delivery Fee"
-              width="50%"
-              placeholder="price"
-              initialValue={0}
-              fieldProps={{
-                addonBefore: '$',
-                type: 'number'
-              }}
-            />
-          </ProForm.Group>
-
-          <ProFormSelect
-            name="paymentType"
-            label="Payment Type"
-            placeholder="Select a payment type"
-            rules={[{ required: true }]}
-            options={[
-              { value: ' ', label: ' ' },
-              { value: 'cash', label: 'Cash' },
-              { value: 'card', label: 'Card' },
-              { value: 'check', label: 'Check' },
-              { value: 'achima', label: 'Achima' },
-              { value: 'snap', label: 'Snap' }
-            ]}
-          />
+        <ProFormText
+            name="deliveryFee"
+            label="Delivery Fee"
+            width='50%'
+            placeholder="price"
+            initialValue={0}
+            fieldProps={{
+                addonBefore:'$',
+                type:'number'
+            }}
+        />
+    </ProForm.Group>
+    
+    <ProFormSelect
+    name="paymentType"
+    label="Payment Type"
+    placeholder="Select a payment type"
+    rules={[{required:true}]}
+    options={[
+      {value:' ',label:' '},
+      { value: 'cash', label: 'Cash' },
+      { value: 'card', label: 'Card' },
+      { value: 'check', label: 'Check' },
+      { value: 'achima', label: 'Achima' },
+      { value: 'snap', label: 'Snap' },
+    ]}
+  />
 
           <ProFormCheckbox
             name="paidInFull"

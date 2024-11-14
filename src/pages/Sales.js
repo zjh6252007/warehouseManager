@@ -309,8 +309,6 @@ export default function Sales() {
     }] : [])
   ];
 
-  console.log(aggregatedData);
-
   return (
     <div style={{ height: 400, width: '100%' }}>
       <Input
@@ -401,6 +399,7 @@ export default function Sales() {
             >
               <Option value="cash">Cash</Option>
               <Option value="card">Card</Option>
+              <Option value="zelle">Zelle</Option>
               <Option value="check">Check</Option>
               <Option value="achima">Achima</Option>
               <Option value="snap">Snap</Option>

@@ -91,8 +91,9 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.text(`Installation Fee: $${installationFee||'0'}`,130,73)
     pdf.setFontSize(13);
     pdf.text("Model",18,83);
-    pdf.text("Type",45,83);
-    pdf.text("Product Price",100,83);
+    pdf.text("Serial Number",45,83);
+    pdf.text("Type",85,83);
+    pdf.text("Product Price",112,83);
     pdf.text("Warranty",145,83);
     pdf.text("Warranty Price",170,83);
 
@@ -101,8 +102,9 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.setFontSize(9);
     items.forEach(item=>{
         pdf.text(item.model,18,datacolum);
-        pdf.text(item.type,45,datacolum);
-        pdf.text(`$${item.price}`,100,datacolum);
+        pdf.text(`${item.serialNumber||""}`,45,datacolum);
+        pdf.text(item.type,82,datacolum);
+        pdf.text(`$${item.price}`,115,datacolum);
         pdf.text(`${item.warranty} Years`,145,datacolum);
         pdf.text(`$${item.warrantyPrice}`,170,datacolum);
         datacolum += 5;
