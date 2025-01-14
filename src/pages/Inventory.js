@@ -70,8 +70,8 @@ const Inventory = () => {
     },
     { field: 'soldDate', headerName: 'Sold Date', width: 150 },
     { field: 'sku', headerName: 'SKU', width: 100 },
-    { field: 'category', headerName: 'Category', width: 160 },
-    { field: 'subcategory', headerName: 'Subcategory', width: 220 },
+    { field: 'category', headerName: 'Category', width: 160,hide:true},
+    { field: 'subcategory', headerName: 'Subcategory', width: 220,hide:true},
     {
       field: 'unitRetail',
       headerName: 'Sale Price',
