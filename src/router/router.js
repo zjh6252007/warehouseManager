@@ -11,6 +11,7 @@ import Profile from "../pages/Profile";
 import StoreSetting from "../pages/StoreSetting";
 import Delivery from "../pages/Delivery";
 import ReturnLog from "../pages/ReturnLog";
+import DetailReport from "../pages/DetailReport";
 const router = createBrowserRouter([
     {
     path:"/",
@@ -71,6 +72,10 @@ const router = createBrowserRouter([
         {
             path:"/store/mystore/return/:storeId",
             element:<ReturnLog/>
+        },
+        {
+            path:"/store/mystore/sales/reports/:storeId/detailreport",
+            element:<DetailReport/>
         }
     ]
     },

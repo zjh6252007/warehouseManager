@@ -7,7 +7,7 @@ import { getSalesByDate, getAllSalesByRange } from '../redux/modules/sales';
 import TotalSales from '../components/TotalSales';
 import { getInventoryById } from '../redux/modules/inventory';
 import { useEffect,useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getAllInventory } from '../redux/modules/inventory';
 import EmployeeSales from '../components/EmployeeSales';
 import Charts from '../components/Chart';
@@ -16,8 +16,9 @@ const Reports = () => {
   const { storeId } = useParams();
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
-  const [startDate,setStartDate] = useState();
-  const [endDate,setEndDate] = useState();
+  const navigate = useNavigate();
+  const [startDate, setStartDate] = useState(moment().startOf('day'));
+  const [endDate, setEndDate] = useState(moment().endOf('day'));
   useEffect(() => {
     if (isStorePage) {
       dispatch(getInventoryById(storeId));
@@ -25,8 +26,8 @@ const Reports = () => {
       dispatch(getAllInventory());
     }
     const dateRange = {
-      start: moment().format('YYYY-MM-DDTHH:mm:ss'),
-      end: moment().format('YYYY-MM-DDTHH:mm:ss')
+      start: startDate.format('YYYY-MM-DDTHH:mm:ss'),
+      end: endDate.format('YYYY-MM-DDTHH:mm:ss'),
     };
     if (isStorePage) {
       dispatch(getSalesByDate(dateRange, storeId));
@@ -39,12 +40,16 @@ const Reports = () => {
 
   const handleChange = (dates, dateStrings) => {
     if (dates) {
-      setStartDate(moment(dateStrings[0]).startOf('day').format('YYYY-MM-DDTHH:mm:ss'));
-      setEndDate(moment(dateStrings[1]).endOf('day').format('YYYY-MM-DDTHH:mm:ss'));
+      const [start, end] = dateStrings;
       const dateRange = {
-        start: moment(dateStrings[0]).startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
-        end: moment(dateStrings[1]).endOf('day').format('YYYY-MM-DDTHH:mm:ss')
+        start: moment(start).startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
+        end: moment(end).endOf('day').format('YYYY-MM-DDTHH:mm:ss'),
       };
+
+      // 更新 state，方便做一些别的依赖
+      setStartDate(moment(start));
+      setEndDate(moment(end));
+
       if (isStorePage) {
         dispatch(getSalesByDate(dateRange, storeId));
       } else {
@@ -153,7 +158,9 @@ const Reports = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 height: 120,
+                cursor: isStorePage? 'pointer':'default',
               }}
+              onClick={isStorePage? () => navigate(`${location.pathname}/detailreport`):undefined}
             >
               <TotalSales title="Sales" value={finalTotalSales}/>
             </Paper>
@@ -198,6 +205,7 @@ const Reports = () => {
             </Paper>
           </Grid>
 
+
           <Grid item xs={12} lg={4}>
             <Paper
               sx={{
@@ -211,6 +219,7 @@ const Reports = () => {
             </Paper>
           </Grid>
 
+
           <Grid item xs={12} md={12} lg={12}>
             <Paper
               sx={{
@@ -223,6 +232,7 @@ const Reports = () => {
               <Charts />
             </Paper>
           </Grid>
+
 
           <Grid item xs={12}>
             <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>

@@ -509,6 +509,7 @@ const ProductForm = ({ handleClose }) => {
       { value: 'check', label: 'Check' },
       { value: 'achima', label: 'Achima' },
       { value: 'snap', label: 'Snap' },
+      { value:'zelle',label:'Zelle'}
     ]}
   />
 
