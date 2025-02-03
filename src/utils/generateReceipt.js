@@ -91,20 +91,21 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.text(`Installation Fee: $${installationFee||'0'}`,130,73)
     pdf.setFontSize(13);
     pdf.text("Model",18,83);
-    pdf.text("Type",60,83);
-    pdf.text("Product Price",105,83);
-    pdf.text("Warranty",145,83);
-    pdf.text("Warranty Price",170,83);
+    pdf.text("Serial Number",59,83);
+    pdf.text("Type",105,83);
+    pdf.text("Product Price",135,83);
+    pdf.text("Warranty",175,83);
 
     let datacolum = 90;
-
+    let totalWarrantyPrice = 0; 
     pdf.setFontSize(9);
     items.forEach(item=>{
         pdf.text(item.model,18,datacolum);
-        pdf.text(item.type,60,datacolum);
-        pdf.text(`$${item.price}`,108,datacolum);
-        pdf.text(`${item.warranty} Years`,145,datacolum);
-        pdf.text(`$${item.warrantyPrice}`,170,datacolum);
+        pdf.text(item.sku || item.serial_number || 'N/A', 59, datacolum);
+        pdf.text(item.type,105,datacolum);
+        pdf.text(`$${item.price}`,145,datacolum);
+        pdf.text(`${item.warranty} Years`,180,datacolum);
+        totalWarrantyPrice += item.warrantyPrice;
         datacolum += 5;
     })
 
@@ -140,9 +141,10 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
       pdf.text(`SUBTOTAL:$${(total-totalTax).toFixed(2)}`,145,datacolum += 5);
     }
     pdf.text(`Discount:$${discount||0}`,145,datacolum+= 7);
+    pdf.text(`Warranty Price:$${totalWarrantyPrice}`,145,datacolum+= 7);
     pdf.text(`TAX:$${totalTax.toFixed(2)}`,145,datacolum += 7);
     pdf.text(`Total: $${total.toFixed(2)}`,145,datacolum += 10);
-    datacolum -= 29;
+    datacolum -= 36;
     
     pdf.line(140,datacolum,140,datacolum+=45);
     pdf.line(10,datacolum,200,datacolum);

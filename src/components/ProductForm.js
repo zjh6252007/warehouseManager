@@ -262,6 +262,9 @@ const ProductForm = ({ handleClose }) => {
               address: customerData.address,
               serialNumber: item.serialNumber,
               salesperson: customerData.sales,
+              sku:item.customSerialNumber && item.customSerialNumber.trim() !== ''
+              ? item.customSerialNumber
+              : item.serialNumber,
               warranty: (Number(item.freewarranty) || 0) + (Number(item.extendedwarranty) || 0),
               warrantyPrice: (item.warrantyPrice || 0) * (Number(item.extendedwarranty) || 0),
               taxes: calculatedTax,
@@ -367,12 +370,17 @@ const ProductForm = ({ handleClose }) => {
 
           <ProFormSelect
             name="serialNumber"
-            label="Serial Number"
-            placeholder="serial Number"
+            label="SKU"
+            placeholder="sku"
             options={skuOptions}
             rules={[{ required: true }]}
           />
 
+          <ProFormText
+          name="customSerialNumber"
+          label="Serial Number"
+          placeholder="Serial"
+            />
           <ProFormText
             name="type"
             label="Type"
