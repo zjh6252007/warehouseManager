@@ -117,6 +117,8 @@ const Reports = () => {
       acc[sale.salesperson] = 0;
     }
     acc[sale.salesperson] += sale.price;
+    acc[sale.salesperson] -= sale.discount;
+    acc[sale.salesperson] += sale.warrantyPrice;
     return acc;
   }, {});
 
