@@ -3,7 +3,7 @@ import { Grid, Paper, Typography, Button, Divider, TextField, Dialog, DialogActi
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { fetchStoreDetail, updateStoreName, updateStoreAddress, updateStorePhone, switchTaxState, setTaxRate, deleteStore } from '../redux/modules/myStore';
+import { fetchStoreDetail, updateStoreName, updateStoreAddress, updateStorePhone, switchTaxState, setTaxRate, updatepurchaseAgreement,deleteStore } from '../redux/modules/myStore';
 import { updateLimitPercentage } from '../redux/modules/inventory';
 const StoreSetting = () => {
     const dispatch = useDispatch();
@@ -23,7 +23,9 @@ const StoreSetting = () => {
 
     const storeInfo = useSelector(state => state.myStore.currentStore);
     const inventoryData = useSelector(state => state.inventory.inventoryList);
-
+    const [agreementOpen, setAgreementOpen] = useState(false);
+    const [purchaseAgreement, setPurchaseAgreement] = useState('');
+    console.log(storeInfo);
     useEffect(() => {
         const categoryLimit = {};
         inventoryData.forEach(item => {
@@ -36,6 +38,27 @@ const StoreSetting = () => {
             limitPercentage: categoryLimit[category]
         })));
     }, [inventoryData]);
+
+    useEffect(()=> {
+        if(storeInfo){
+             setPurchaseAgreement(
+                storeInfo.purchaseAgreement||
+                       `TYPE1: Scratch and Dent Goods: Warranty within 30 Days After Purchase.
+After 30 days: - Above delivery and service fees are not refundable.
+For reasons other than functional issues, customers are responsible for sending appliances back to the store by themselves.
+After the goods are received, the payment will be refunded according to the customer's payment method
+(if customer need merchant pick up the returned goods at home, additional shipping fees will be charged).
+Customers are responsible for any service fee / processing fee that may occur during the refund.
+
+- Within the 30 days of purchase, please get in touch with the store if anything. When initializing a claim, please have the following information ready:
+1. Invoice/Receipt from the store as Proof of Purchase
+2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)
+
+Each service request is subject to a $99 deductible. And service includes parts, service, and labor.
+$99 Fee charged only due to failure of accessories and not due to failure of product.`
+     );
+   }
+ }, [storeInfo]);
 
     const handleEditStoreName = () => {
         setDialogTitle('Change Store Name');
@@ -158,12 +181,18 @@ const StoreSetting = () => {
                     <Divider />
                 </Grid>
                 <Grid item xs={12} container alignItems="center" justifyContent="space-between">
-                    <Typography variant="h6">Set minimum price</Typography>
-                    <Button variant="contained" onClick={handleMinPriceOpen}>Modify</Button>
+                    <Typography variant="h6">Purchase Agreement</Typography>
+                    <Button variant="contained" onClick={() => setAgreementOpen(true)}>
+                        Modify
+                    </Button>
                 </Grid>
                 <Grid item xs={12}>
-                    <Divider />
-                </Grid>
+            <Paper sx={{ padding: 2, minHeight: 100 }}>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                    {storeInfo.purchaseAgreement || purchaseAgreement}
+                </Typography>
+            </Paper>
+            </Grid>
                 <Grid item xs={12} container alignItems="center" justifyContent="space-between">
                     <Typography variant="h6"></Typography>
                     <Button variant="contained" onClick={handleDeleteStore} sx={{ backgroundColor: 'red', color: 'white', '&:hover': { backgroundColor: 'darkred' } }}>DELETE STORE</Button>
@@ -229,6 +258,35 @@ const StoreSetting = () => {
                     <Button onClick={handleMinPriceSubmit}>Submit</Button>
                 </DialogActions>
             </Dialog>
+            <Dialog
+               open={agreementOpen}
+               onClose={() => setAgreementOpen(false)}
+               sx={{ '& .MuiDialog-paper': { width: "80vw", maxWidth: "800px" } }}
+               disablePortal
+               disableEnforceFocus
+             >
+               <DialogTitle>Edit Purchase Agreement</DialogTitle>
+               <DialogContent>
+                 <TextField
+                   variant="outlined"
+                   fullWidth
+                   multiline
+                   minRows={10}
+                   value={purchaseAgreement}
+                   onChange={(e) => setPurchaseAgreement(e.target.value)}
+                   sx={{ width: "100%" }}
+                 />
+               </DialogContent>
+               <DialogActions>
+                 <Button onClick={() => setAgreementOpen(false)}>Cancel</Button>
+                 <Button onClick={() => {
+                     dispatch(updatepurchaseAgreement(storeId, purchaseAgreement));
+                     setAgreementOpen(false);
+                 }}>
+                   Submit
+                 </Button>
+               </DialogActions>
+           </Dialog>
         </Paper>
     );
 };

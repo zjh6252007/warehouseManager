@@ -195,8 +195,6 @@ const Inventory = () => {
     location: item.store?.address || 'N/A', // 如果没有地址，显示 'N/A' 或其他占位符
   }));
   const selectedData = inventoryData.filter(item => selectedRows.includes(item.id));
-  console.log(processedInventoryData);
-
   const handleDownload = () => {
     const dataToExport = inventoryData.map(({ limitPercentage, qty, unitWeight, store, ...rest }) => ({
       ...rest,

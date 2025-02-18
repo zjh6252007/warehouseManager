@@ -20,7 +20,7 @@ const myStore = createSlice({
         setStoreId(state,action){
             state.storeid = action.payload;
             localStorage.setItem('store_id',action.payload);
-        }
+        },
     }
 })
 const {setStoreList,updateStoreList,setCurrentStore,setStoreId} = myStore.actions;
@@ -84,6 +84,11 @@ const setTaxRate = (storeId,tax) =>async(dispatch)=>{
     return res;
 }
 
+const updatepurchaseAgreement = (storeId,purchaseAgreement) => async(dispatch)=>{
+    const res = await request.post(`/api/store/setPurchaseAgreement`,{storeId,purchaseAgreement});
+    dispatch(fetchStoreDetail(storeId));
+    return res;
+}
 const deleteStore = (id) =>async()=>{
     try{
         const res = await request.delete(`/api/store/${id}`)
@@ -92,6 +97,6 @@ const deleteStore = (id) =>async()=>{
         console.log(error)
     }
 }
-export {getStore,createStore,fetchStoreDetail,setStoreId,updateStoreName,updateStoreAddress,updateStorePhone,switchTaxState,setTaxRate,deleteStore}
+export {getStore,createStore,fetchStoreDetail,setStoreId,updateStoreName,updateStoreAddress,updateStorePhone,switchTaxState,setTaxRate,updatepurchaseAgreement,deleteStore}
 const myStoreReducer = myStore.reducer;
 export default myStoreReducer;

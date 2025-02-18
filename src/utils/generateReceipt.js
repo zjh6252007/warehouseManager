@@ -32,7 +32,7 @@ const getBase64ImageFromURL = (url) => {
 const generateReceipt = async(orderInfo,companyInfo) =>{
 const pdf= new jsPDF();
 const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items,paymentType,installationFee,discount,note,subtotal} = orderInfo;
-const {address:storeAddress,phone,storeName,qrcode,storeLogo} = companyInfo;
+const {address:storeAddress,phone,storeName,qrcode,storeLogo,purchaseAgreement} = companyInfo;
 const formattedDate = moment(createdAt).format('MM/DD/YYYY'); 
     const totalPages = pdf.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
@@ -152,16 +152,14 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     
     pdf.setFontSize(8);
     pdf.setTextColor(70);
-    pdf.text(`TYPE1: Scratch and Dent Goods: Warranty within 30 Days After Purchase:After 30 days: - Above delivery and service fees are not refundable. `,18,datacolum += 30)
-    pdf.text('For reasons other than functional issues, customers are responsible for sending appliances back to the store by themselves. After the goods',18,datacolum += 5)
-    pdf.text("are received, the payment will be refunded according to the customer's payment method (if customer need merchant pick up the returned",18,datacolum += 5)
-    pdf.text("goods at home, additional shipping fees will be charged). Customers are responsible for any service fee / processing fee that may occur during",18,datacolum += 5)
-    pdf.text("the refund. - Within the 30 days of purchase, please get in touch with the store if anything. When initialing a claim, please have the",18,datacolum += 5)
-    pdf.text("following information ready:  ",18,datacolum+=5);
-    pdf.text("1. Invoice/Receipt from the store as Proof of Purchase",18,datacolum += 5);
-    pdf.text("2. Item Name and Model Number (Ex. LG Refrigerator, Model LRMVS3006)",18,datacolum+=5);
-    pdf.text("Each service request is subject to a $99 deductible. And service includes parts, service, and labor.",18,datacolum+=5);
-    pdf.text("99$ Fee charged only due to failure of accessories and not due to failure of product.",18,datacolum+=5)
+
+    datacolum += 30;
+    const lines = pdf.splitTextToSize(purchaseAgreement || "", 180);
+    for (let i = 0; i < lines.length; i++) {
+      pdf.text(lines[i], 18, datacolum);
+      datacolum += 5; // 每行间距 5
+    }
+    
     pdf.setFontSize(10);
     pdf.text("Customer Signature:_____________",145,datacolum += 15);
     
