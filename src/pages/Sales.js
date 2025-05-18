@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { Table, Space, Modal, Input, Button, Form, Checkbox, Select, DatePicker, message } from 'antd';
+import { Table, Space, Modal, Input, Button, Form, Checkbox, Select, DatePicker, message,Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import {
-  getSalesByStoreId,
   deleteSales,
-  getAllSales,
+  getSalesPagedAdmin,
+  getSalesPagedByStore,
   returnSales,
   clearSalesList,
   addAccessory,
@@ -25,6 +25,12 @@ export default function Sales() {
   const dispatch = useDispatch();
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
+  const [page,setPage] = useState(0);
+  const [pageSize,setPageSize] = useState(20);
+  const [totalItems,setTotalItems] = useState(0);
+  const [searchText, setSearchText] = useState("");
+  const [filteredData,setFilteredData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     dispatch(clearSalesList());
@@ -35,16 +41,25 @@ export default function Sales() {
   const { storeId } = useParams();
 
   useEffect(() => {
-    if (userInfo.role === 'user') {
-      dispatch(getSalesByStoreId(userInfo.storeId));
-      dispatch(fetchStoreDetail(userInfo.storeId));
-    } else if (userInfo.role === 'admin' && isStorePage) {
-      dispatch(getSalesByStoreId(storeId));
-      dispatch(fetchStoreDetail(storeId));
-    } else if (userInfo.role === 'admin') {
-      dispatch(getAllSales());
-    }
-  }, [dispatch, userInfo.storeId, userInfo.role, storeId, isStorePage]);
+    setLoading(true);
+    const fetchData = async () => {
+      if (userInfo.role === 'user') {
+        const res = await dispatch(getSalesPagedByStore(userInfo.storeId, page, pageSize, searchText));
+        setTotalItems(res?.totalElements || 0);
+        dispatch(fetchStoreDetail(userInfo.storeId));
+      } else if (userInfo.role === 'admin' && isStorePage) {
+        const res = await dispatch(getSalesPagedByStore(storeId, page, pageSize, searchText));
+        setTotalItems(res?.totalElements || 0);
+        dispatch(fetchStoreDetail(storeId));
+      } else if (userInfo.role === 'admin') {
+        const res = await dispatch(getSalesPagedAdmin(page, pageSize, searchText));
+        setTotalItems(res?.totalElements || 0);
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [dispatch, userInfo, storeId, isStorePage, page, pageSize, searchText]);
+
 
   const salesInfo = useSelector(state => state.sales.salesList);
   const storeInfo = useSelector(state => state.myStore.currentStore);
@@ -62,8 +77,6 @@ export default function Sales() {
   const [open, setOpen] = useState(false);
   const [openReturn, setOpenReturn] = useState(false);
   const [returnList, setReturnList] = useState([]);
-  const [searchText, setSearchText] = useState("");
-  const [filteredData, setFilteredData] = useState([]);
   const [openAccessory, setOpenAccessory] = useState(false);
   const [accessoryName, setAccessoryName] = useState("");
   const [accessoryPrice, setAccessoryPrice] = useState("");
@@ -111,14 +124,14 @@ export default function Sales() {
     }));
   }, [salesInfo]);
 
+
   useEffect(() => {
-    const filtered = aggregatedData.filter(item =>
-      item.invoiceNumber.includes(searchText) ||
-      (item.contact && item.contact.includes(searchText)) ||
-      (item.customer && item.customer.toLowerCase().includes(searchText.toLowerCase()))
-    );
-    setFilteredData(filtered);
-  }, [searchText, aggregatedData]);
+    if (salesInfo && salesInfo.length > 0) {
+      setFilteredData(aggregatedData);
+    } else {
+      setFilteredData([]);
+    }
+  }, [salesInfo, aggregatedData]);
 
   const handleOpenReturn = (record) => {
     setReturnList(record.items || []);
@@ -182,21 +195,18 @@ export default function Sales() {
     generateReceipt(record, storeInfo);
   };
 
-  const handleGenerateReceipt = () => {
-    // If remainBalance > 0, validate payAmount
-    if (selectedRecord.remainBalance > 0) {
-      const payAmt = parseFloat(payAmount);
-      if (isNaN(payAmt) || payAmt <= 0) {
-        message.error("Please enter a valid Pay Amount greater than 0.");
-        return;
-      }
-      
-      // Optional: Ensure payAmount does not exceed remainBalance
-      if (payAmt > selectedRecord.remainBalance) {
-        message.error("Pay Amount cannot exceed Amount Due.");
-        return;
-      }
+const handleGenerateReceipt = () => {
+  if (selectedRecord.remainBalance > 0) {
+    const payAmt = parseFloat(payAmount);
+    if (isNaN(payAmt) || payAmt <= 0) {
+      message.error("Please enter a valid Pay Amount greater than 0.");
+      return;
     }
+    if (payAmt > selectedRecord.remainBalance) {
+      message.error("Pay Amount cannot exceed Amount Due.");
+      return;
+    }
+  }
     
     const installationDiscountDTO = {
       installation: includeInstallation,
@@ -210,16 +220,20 @@ export default function Sales() {
       payAmount: selectedRecord.remainBalance > 0 ? parseFloat(payAmount) : 0, // Include payAmount
     };
     
-    dispatch(setReceipt(installationDiscountDTO, selectedRecord.store.id));
+    dispatch(setReceipt(
+      installationDiscountDTO,
+      selectedRecord.store.id,
+      page,
+      pageSize,
+      searchText,
+      userInfo
+    ));
     handleCloseReceiptModal();
   };
 
   const handleReturnItems = (selectedItems) => {
-    if (storeId) {
-      dispatch(returnSales(selectedItems, storeId, userInfo.id));
-    } else {
-      dispatch(returnSales(selectedItems, userInfo.storeId, userInfo.id));
-    }
+    const sid = storeId || userInfo.storeId;
+    dispatch(returnSales(selectedItems, sid, userInfo.id, page, pageSize, searchText, userInfo));
     handleCloseReturn();
   };
 
@@ -227,11 +241,11 @@ export default function Sales() {
     dispatch(deleteSales(invoiceNumber, storeId))
       .then(() => {
         if (userInfo.role === 'user') {
-          dispatch(getSalesByStoreId(userInfo.storeId));
+          dispatch(getSalesPagedByStore(userInfo.storeId, page, pageSize, searchText));
         } else if (userInfo.role === 'admin' && isStorePage) {
-          dispatch(getSalesByStoreId(storeId));
+          dispatch(getSalesPagedByStore(storeId, page, pageSize, searchText));
         } else if (userInfo.role === 'admin') {
-          dispatch(getAllSales());
+          dispatch(getSalesPagedAdmin(page, pageSize, searchText));
         }
         handleClose();
       });
@@ -244,7 +258,7 @@ export default function Sales() {
       price: parseFloat(accessoryPrice) || 0, // Ensure it's a number
       model: accessoryName
     };
-    dispatch(addAccessory(accessoryDTO, selectedRecord.store.id));
+    dispatch(addAccessory(accessoryDTO, selectedRecord.store.id, page, pageSize, searchText, userInfo));
     handleCloseAccessory();
   };
 
@@ -313,13 +327,45 @@ export default function Sales() {
       <Input
         placeholder="Search by Invoice or Customer"
         value={searchText}
-        onChange={e => setSearchText(e.target.value)}
+        onChange={(e)=>{
+          setSearchText(e.target.value);
+          setPage(0);
+        }}
         style={{ marginBottom: 16 }}
       />
+      <div style={{ position: 'relative', height: 'calc(100vh - 140px)' }}>
+      {loading ? (
+    <div
+    style={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'white',
+      zIndex: 10,
+    }}
+  >
+            <Spin tip="Loading..." size="large" />
+          </div>
+      ):(
       <Table
         rowKey={(record) => `${record.invoiceNumber}-${record.id}`} // Ensure uniqueness
         columns={columns}
         dataSource={filteredData}
+        pagination={{
+          current:page + 1,
+          pageSize:pageSize,
+          total:totalItems,
+          showSizeChanger:true,
+          onChange:(newPage,newPageSize)=>{
+            setPage(newPage-1);
+            setPageSize(newPageSize);
+          }
+        }}
         onRow={(record) => ({
           style: {
             backgroundColor: record.remainBalance > 0 ? '#ffe6e6' : '', // Light red background
@@ -327,6 +373,9 @@ export default function Sales() {
           },
         })}
       />
+      )
+    }
+    </div>
       
       {/* Cancel Order Modal */}
       <Modal

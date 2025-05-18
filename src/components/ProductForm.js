@@ -1,4 +1,4 @@
-import { Button, message, Descriptions } from 'antd';
+import { Button, message, Descriptions, Input,Space } from 'antd';
 import {
   ProFormText,
   ProFormSelect,
@@ -239,6 +239,55 @@ const ProductForm = ({ handleClose }) => {
     return Promise.resolve();
   };
 
+  const PhoneInput = ({ onChange }) => {
+    const [parts, setParts] = useState({ a: '', b: '', c: '' });
+    const refA = useRef();
+    const refB = useRef();
+    const refC = useRef();
+  
+    const handleChange = (key, maxLen, nextRef) => (e) => {
+      const val = e.target.value.replace(/\D/g, '').slice(0, maxLen);
+      const updated = { ...parts, [key]: val };
+      setParts(updated);
+  
+  
+      const full = `${updated.a}-${updated.b}-${updated.c}`;
+      if (onChange) onChange(full);
+      if (val.length === maxLen && nextRef?.current) {
+        nextRef.current.focus();
+      }
+    };
+  
+    
+    return (
+      <Space>
+        <Input
+          ref={refA}
+          value={parts.a}
+          onChange={handleChange('a', 3, refB)}
+          maxLength={3}
+          style={{ width: 60, textAlign: 'center' }}
+        />
+        <span>-</span>
+        <Input
+          ref={refB}
+          value={parts.b}
+          onChange={handleChange('b', 3, refC)}
+          maxLength={3}
+          style={{ width: 60, textAlign: 'center' }}
+        />
+        <span>-</span>
+        <Input
+          ref={refC}
+          value={parts.c}
+          onChange={handleChange('c', 4)}
+          maxLength={4}
+          style={{ width: 80, textAlign: 'center' }}
+        />
+      </Space>
+    );
+  };
+
   return (
     <>
       <StepsForm
@@ -262,9 +311,9 @@ const ProductForm = ({ handleClose }) => {
               address: customerData.address,
               serialNumber: item.serialNumber,
               salesperson: customerData.sales,
-              sku:item.customSerialNumber && item.customSerialNumber.trim() !== ''
-              ? item.customSerialNumber
-              : item.serialNumber,
+              sku: item.customSerialNumber && item.customSerialNumber.trim() !== ''
+                ? item.customSerialNumber
+                : item.serialNumber,
               warranty: (Number(item.freewarranty) || 0) + (Number(item.extendedwarranty) || 0),
               warrantyPrice: (item.warrantyPrice || 0) * (Number(item.extendedwarranty) || 0),
               taxes: calculatedTax,
@@ -377,10 +426,10 @@ const ProductForm = ({ handleClose }) => {
           />
 
           <ProFormText
-          name="customSerialNumber"
-          label="Serial Number"
-          placeholder="Serial"
-            />
+            name="customSerialNumber"
+            label="Serial Number"
+            placeholder="Serial"
+          />
           <ProFormText
             name="type"
             label="Type"
@@ -468,12 +517,13 @@ const ProductForm = ({ handleClose }) => {
             placeholder="address"
             rules={[{ required: true }]}
           />
-          <ProFormText
-            name="contact"
-            label="Phone"
-            placeholder="Phone number"
-          />
-
+<ProForm.Item
+  name="contact"
+  label="Phone"
+  rules={[{ required: true, message: 'Please enter a valid phone number' }]}
+>
+  <PhoneInput />
+</ProForm.Item>
           <ProFormText
             name="sales"
             label="Sales"
@@ -492,34 +542,34 @@ const ProductForm = ({ handleClose }) => {
               }}
             />
 
-        <ProFormText
-            name="deliveryFee"
-            label="Delivery Fee"
-            width='50%'
-            placeholder="price"
-            initialValue={0}
-            fieldProps={{
-                addonBefore:'$',
-                type:'number'
-            }}
-        />
-    </ProForm.Group>
-    
-    <ProFormSelect
-    name="paymentType"
-    label="Payment Type"
-    placeholder="Select a payment type"
-    rules={[{required:true}]}
-    options={[
-      {value:' ',label:' '},
-      { value: 'cash', label: 'Cash' },
-      { value: 'card', label: 'Card' },
-      { value: 'check', label: 'Check' },
-      { value: 'achima', label: 'Achima' },
-      { value: 'snap', label: 'Snap' },
-      { value:'zelle',label:'Zelle'}
-    ]}
-  />
+            <ProFormText
+              name="deliveryFee"
+              label="Delivery Fee"
+              width='50%'
+              placeholder="price"
+              initialValue={0}
+              fieldProps={{
+                addonBefore: '$',
+                type: 'number'
+              }}
+            />
+          </ProForm.Group>
+
+          <ProFormSelect
+            name="paymentType"
+            label="Payment Type"
+            placeholder="Select a payment type"
+            rules={[{ required: true }]}
+            options={[
+              { value: ' ', label: ' ' },
+              { value: 'cash', label: 'Cash' },
+              { value: 'card', label: 'Card' },
+              { value: 'check', label: 'Check' },
+              { value: 'achima', label: 'Achima' },
+              { value: 'snap', label: 'Snap' },
+              { value: 'zelle', label: 'Zelle' }
+            ]}
+          />
 
           <ProFormCheckbox
             name="paidInFull"

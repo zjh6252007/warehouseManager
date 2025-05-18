@@ -10,7 +10,7 @@ import InventoryToolbar from '../components/InventoryToolBar';
 import { generatePriceTag } from '../utils/generatePriceTag';
 import InventoryForm from '../components/InventoryForm';
 import Papa from 'papaparse';
-import { message } from 'antd';
+import { message,Spin } from 'antd';
 
 const Inventory = () => {
   const userInfo = useSelector(state => state.user.userInfo);
@@ -25,16 +25,23 @@ const Inventory = () => {
   const [editingInventory, setEditingInventory] = useState(null);
 
   useEffect(() => {
-    if (isStorePage) {
-      dispatch(getInventoryById(storeId));
-    } else if (userInfo.role === 'admin') {
-      dispatch(getAllInventory());
-      dispatch(getStore());
-    } else {
-      dispatch(getInventory());
-    }
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        if (isStorePage) {
+          await dispatch(getInventoryById(storeId));
+        } else if (userInfo.role === 'admin') {
+          await dispatch(getAllInventory());
+          await dispatch(getStore());
+        } else {
+          await dispatch(getInventory());
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, [dispatch, userInfo.role, isStorePage, storeId]);
-
   const columns = [
     { field: 'itemDescription', headerName: 'Item Description', width: 250 },
     { 
@@ -213,7 +220,25 @@ const Inventory = () => {
   };
 
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
+    <Box sx={{ width: '100%', height: '100%',position:'relative' }}>
+      {loading && (
+        <Box sx={{
+          position: 'absolute',
+          top: 100,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(255,255,255,0.7)',
+          zIndex: 9999
+        }}>
+          <Spin tip="Loading..." size="large" />
+        </Box>
+      )}
+      {!loading &&(
+        <>
       {userInfo.role === 'admin' && (<InventoryToolbar numSelected={selectedRows.length} onDelete={() => handleDelete()} />)}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
         {isStorePage && (
@@ -297,6 +322,8 @@ const Inventory = () => {
         initialValues={editingInventory}  // 将 editingInventory 作为 initialValues 传递
         storeInfo={storeInfo}  // 传递 storeInfo 数据
       />
+      </>
+      )}
     </Box>
   );
 };

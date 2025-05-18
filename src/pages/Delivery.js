@@ -86,6 +86,8 @@ const Delivery = () => {
       dataIndex: 'deliveryDate',
       key: 'deliveryDate',
       render: formatDate,
+      defaultSortOrder:'descend',
+      sorter:(a,b) => new Date(a.deliveryDate) - new Date(b.deliveryDate),
     },
     {
       title: 'Customer',

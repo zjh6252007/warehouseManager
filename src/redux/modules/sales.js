@@ -22,6 +22,16 @@ const sales = createSlice({
 
 const {setSalesList,setSalesData,clearSalesList} = sales.actions;
 
+const refreshSalesListAfterChange = (dispatch, userInfo, storeId, page = 0, size = 20, keyword = "") => {
+    if (userInfo.role === 'user') {
+      return dispatch(getSalesPagedByStore(userInfo.storeId, page, size, keyword));
+    } else if (userInfo.role === 'admin' && storeId) {
+      return dispatch(getSalesPagedByStore(storeId, page, size, keyword));
+    } else if (userInfo.role === 'admin') {
+      return dispatch(getSalesPagedAdmin(page, size, keyword));
+    }
+  };
+
 const postSales = (data) => async(dispatch)=>{
 try{
     const res = await request.post("/api/sales/add",data.cart,{
@@ -35,16 +45,6 @@ try{
 {
     console.log(error);
 }
-}
-
-const getSalesByStoreId =(id) =>async(dispatch)=>{
-    try{
-        const res = await request.get(`/api/sales/getByStore?storeId=${id}`);
-        dispatch(setSalesList(res.data))
-        return res;
-    }catch(error){
-        console.log(error)
-    }
 }
 
 const deleteSales = (invoiceNumber,storeId) => async(dispatch)=>{
@@ -71,23 +71,13 @@ const getSalesByDate =(date,storeId) =>async(dispatch) =>{
         console.log(error)
     }
 }
-const returnSales = (returnList,storeId,userId) =>async(dispatch)=>{
+const returnSales = (returnList, storeId, userId, page = 0, pageSize = 20, keyword = "", userInfo) =>async(dispatch)=>{
     try{
         const res = await request.post(`/api/sales/return`,{
                 returnList,
                 userId
         });
-        dispatch(getSalesByStoreId(storeId));
-        return res;
-    }catch(error){
-        console.log(error);
-    }
-}
-
-const getAllSales = () =>async(dispatch)=>{
-    try{
-        const res = await request.get("/api/sales/getAll");
-        dispatch(setSalesList(res.data));
+        refreshSalesListAfterChange(dispatch, userInfo, storeId, page, pageSize, keyword);
         return res;
     }catch(error){
         console.log(error);
@@ -109,25 +99,52 @@ const getAllSalesByRange =(date) =>async(dispatch) =>{
     }
 }
 
-const addAccessory = (data,storeId) =>async(dispatch) =>{
+const addAccessory = (data, storeId, page, pageSize, keyword, userInfo) => async (dispatch) => {
+    try {
+      const res = await request.post('/api/sales/addAccessory', data);
+      await refreshSalesListAfterChange(dispatch, userInfo, storeId, page, pageSize, keyword);
+      return res;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+
+  const setReceipt = (data, storeId, page, pageSize, keyword, userInfo) => async (dispatch) => {
+    try {
+      const res = await request.post('/api/sales/generateReceipt', data);
+      await refreshSalesListAfterChange(dispatch, userInfo, storeId, page, pageSize, keyword);
+      return res;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+const getSalesPagedAdmin = (page=0,size=20,keyword="")=>async(dispatch)=>{
     try{
-        const res = await request.post('/api/sales/addAccessory',data);
-        dispatch(getSalesByStoreId(storeId));
-        return res;
+        const res = await request.get("/api/sales/searchAdmin",{
+            params:{page,size,keyword}
+        });
+        dispatch(setSalesList(res.data.content));
+        return res.data;
     }catch(error){
         console.log(error);
     }
 }
 
-const setReceipt = (data,storeId) =>async(dispatch) =>{
-    try{
-        const res = await request.post('/api/sales/generateReceipt',data);
-        dispatch(getSalesByStoreId(storeId));
-        return res;
-    }catch(error){
-        console.log(error);
+const getSalesPagedByStore = (storeId, page = 0, size = 20, keyword = "") => async (dispatch) => {
+    try {
+      const res = await request.get("/api/sales/searchByStore", {
+        params: { storeId, page, size, keyword }
+      });
+      console.log(res.data);
+      dispatch(setSalesList(res.data.content));
+      return res.data;
+    } catch (error) {
+      console.log(error);
     }
-}
-export {postSales,getSalesByStoreId,deleteSales,getSalesByDate,returnSales,getAllSales,getAllSalesByRange,clearSalesList,addAccessory,setReceipt}
+  };
+
+export {postSales,deleteSales,getSalesByDate,returnSales,getSalesPagedAdmin,getSalesPagedByStore,getAllSalesByRange,clearSalesList,addAccessory,setReceipt}
 const salesReducer = sales.reducer;
 export default salesReducer;
