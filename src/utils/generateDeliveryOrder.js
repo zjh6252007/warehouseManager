@@ -31,7 +31,7 @@ const getBase64ImageFromURL = (url) => {
 
 const generateDeliveryOrder = async(orderInfo,companyInfo) =>{
 const pdf= new jsPDF();
-const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items,paymentType,installationFee,discount,note,subtotal,installation} = orderInfo;
+const { contact,  invoiceNumber, createdAt, salesperson, address, customer, total,totalTax,items,paymentType,installationFee,discount,note,subtotal,installation } = orderInfo;
 const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
 
     const formattedDate = createdAt.split("T")[0];  
@@ -89,10 +89,9 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
     pdf.setFontSize(9);
     if(installation === true){
       pdf.text(`Y`,123,100);
-      }else{
-        pdf.text(`N`,123,100);
-      }
-
+    }else{
+      pdf.text(`N`,123,100);
+    }
 
     items.forEach(item=>{
         pdf.text(item.model,18,datacolum);
@@ -101,9 +100,24 @@ const {address:storeAddress,phone,storeName,qrcode} = companyInfo;
         datacolum += 5;
     })
 
-    pdf.text('By Signing below, customer acknowledge receipt of items mentioned above',18,datacolum += 30);
+    // Add NOTE section just like in receipt
+    datacolum += 10;
+    pdf.setLineWidth(0.5)
+    pdf.setDrawColor("#808080");
+    pdf.line(10,datacolum,200,datacolum);
+    pdf.text("NOTE",15,datacolum += 5);
+    const noteLines = pdf.splitTextToSize(note||"",75);
+    let currentLineY = datacolum + 4;
+    for(const line of noteLines){
+        pdf.text(line,14,currentLineY)
+        currentLineY += 3;
+    }
+
+    datacolum = currentLineY + 15;
+    pdf.text('By Signing below, customer acknowledge receipt of items mentioned above',18,datacolum);
     pdf.text('Date: ____________________',18,datacolum += 10);
     pdf.text('Customer Signature: ____________________',76,datacolum);
+
     const pdfBlob = pdf.output('blob');
     window.open(URL.createObjectURL(pdfBlob), '_blank');
 

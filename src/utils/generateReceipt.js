@@ -80,15 +80,9 @@ const formattedDate = moment(createdAt).format('MM/DD/YYYY');
     pdf.text(`${contact||''}`,20,73);
 
     pdf.text("Delivery Infomation",130,55);
-    if(items[0].deliveryDate){
-        const deliveryDate = moment(items[0].deliveryDate).format('MM/DD/YYYY');
-        pdf.text(`Delivery Date: ${deliveryDate}`,130,63);
-        }else{
-            pdf.text(`Delivery Date: N/A`,130,63);
-        }
-    const installationFees = installationFee || 0; 
-    pdf.text(`Delivery Fee: $${items[0].deliveryFee||'0'}`,130,68)
-    pdf.text(`Installation Fee: $${installationFee||'0'}`,130,73)
+
+    pdf.text(`Delivery Fee: $${items[0].deliveryFee||'0'}`,130,63)
+    pdf.text(`Installation Fee: $${installationFee||'0'}`,130,68)
     pdf.setFontSize(13);
     pdf.text("Model",18,83);
     pdf.text("Serial Number",59,83);

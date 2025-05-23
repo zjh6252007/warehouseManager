@@ -1,4 +1,4 @@
-import { Button, message, Descriptions, Input,Space } from 'antd';
+import { Button, message, Descriptions, Input, Space,Radio } from 'antd';
 import {
   ProFormText,
   ProFormSelect,
@@ -6,7 +6,8 @@ import {
   ProForm,
   ProFormDatePicker,
   ProFormCheckbox,
-  ProFormDependency
+  ProFormDependency,
+  ProFormRadio
 } from '@ant-design/pro-components';
 import { useDispatch, useSelector } from 'react-redux';
 import React, { useRef, useState, useEffect } from 'react';
@@ -16,6 +17,7 @@ import { postSales } from '../redux/modules/sales';
 import moment from 'moment';
 import { useLocation, useParams } from 'react-router-dom';
 import { fetchStoreDetail } from '../redux/modules/myStore';
+import AddressAutoCompleteInput from '../utils/AddressAutoCompleteInput';
 
 const ProductForm = ({ handleClose }) => {
   const dispatch = useDispatch();
@@ -239,26 +241,33 @@ const ProductForm = ({ handleClose }) => {
     return Promise.resolve();
   };
 
-  const PhoneInput = ({ onChange }) => {
+  const PhoneInput = ({ value = '', onChange }) => {
     const [parts, setParts] = useState({ a: '', b: '', c: '' });
+  
     const refA = useRef();
     const refB = useRef();
     const refC = useRef();
+  
+    useEffect(() => {
+      if (value && typeof value === 'string') {
+        const [a, b, c] = value.split('-');
+        setParts({ a: a || '', b: b || '', c: c || '' });
+      }
+    }, [value]);
   
     const handleChange = (key, maxLen, nextRef) => (e) => {
       const val = e.target.value.replace(/\D/g, '').slice(0, maxLen);
       const updated = { ...parts, [key]: val };
       setParts(updated);
   
-  
       const full = `${updated.a}-${updated.b}-${updated.c}`;
-      if (onChange) onChange(full);
+      onChange?.(full);
+  
       if (val.length === maxLen && nextRef?.current) {
         nextRef.current.focus();
       }
     };
-  
-    
+
     return (
       <Space>
         <Input
@@ -325,6 +334,7 @@ const ProductForm = ({ handleClose }) => {
               note: customerData.note,
               paymentType: customerData.paymentType,
               remainBalance: remainBalance,
+              transport: customerData.transport,
               ...(store_info.modifyInvoiceNumber && {
                 invoiceNumber: customerData.invoiceNumber
               })
@@ -511,49 +521,82 @@ const ProductForm = ({ handleClose }) => {
             placeholder="Name"
             rules={[{ required: true }]}
           />
-          <ProFormText
-            name="address"
-            label="Address"
-            placeholder="address"
-            rules={[{ required: true }]}
-          />
 <ProForm.Item
-  name="contact"
-  label="Phone"
-  rules={[{ required: true, message: 'Please enter a valid phone number' }]}
+  name="address"
+  label="Address"
+  rules={[{ required: true, message: 'Please enter an address' }]}
 >
-  <PhoneInput />
+  <AddressAutoCompleteInput />
+
 </ProForm.Item>
+          <ProForm.Item
+            name="contact"
+            label="Phone"
+            rules={[{ required: true, message: 'Please enter a valid phone number' }]}
+          >
+            <PhoneInput />
+          </ProForm.Item>
           <ProFormText
             name="sales"
             label="Sales"
             placeholder="Sales Name"
             initialValue={user_info.salesName}
           />
+<ProFormRadio.Group
+  name="transport"
+  label="Transport Method"
+  initialValue="Delivery"
+  options={[
+    { label: 'Delivery', value: 'Delivery' },
+    { label: 'Pick Up', value: 'Pick Up' }
+  ]}
+  fieldProps={{
+    buttonStyle: 'solid',
+    optionType: 'button',
+    style: { display: 'flex', gap: '12px' }
+  }}
+/>
 
-          <ProForm.Group>
-            <ProFormDatePicker
-              name="deliveryDate"
-              label="Delivery Date"
-              width="70%"
-              placeholder="deliveryDate"
-              fieldProps={{
-                format: 'YYYY-MM-DD'
-              }}
-            />
+<ProFormDependency name={['transport']}>
+  {({ transport }) => (
+    <div
+      style={{
+        maxHeight: transport === 'Delivery' ? '100px' : '0px',
+        overflow: 'hidden',
+        transition: 'max-height 0.3s ease, opacity 0.3s ease',
+        opacity: transport === 'Delivery' ? 1 : 0
+      }}
+    >
+      {transport === 'Delivery' ? (
+        <ProFormText
+          name="deliveryFee"
+          label="Delivery Fee"
+          placeholder="Enter delivery fee"
+          rules={[
+            { required: true, message: 'Please enter delivery fee' },
+            {
+              validator: (_, value) => {
+                if (value === undefined || value === '') return Promise.resolve();
+                if (!isNaN(value) && parseFloat(value) >= 0) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error('Delivery fee must be ≥ 0'));
+              }
+            }
+          ]}
+          fieldProps={{
+            addonBefore: '$',
+            type: 'number',
+            min: 0
+          }}
+        />
+      ) : (
+        <ProFormText name="deliveryFee" hidden initialValue={0} />
+      )}
+    </div>
+  )}
+</ProFormDependency>
 
-            <ProFormText
-              name="deliveryFee"
-              label="Delivery Fee"
-              width='50%'
-              placeholder="price"
-              initialValue={0}
-              fieldProps={{
-                addonBefore: '$',
-                type: 'number'
-              }}
-            />
-          </ProForm.Group>
 
           <ProFormSelect
             name="paymentType"
