@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Table, Space, Modal, Input, Button, Form, Checkbox, Select, DatePicker, message,Spin } from 'antd';
+import { Table, Space, Modal, Input, Button, Form, Checkbox, Select, DatePicker, message, Spin, Card, Tag, Dropdown, Menu,Pagination } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import {
@@ -18,15 +18,18 @@ import { useLocation, useParams } from 'react-router-dom';
 import ReturnModalContent from '../components/ReturnModalContent';
 import { generateDeliveryOrder } from '../utils/generateDeliveryOrder';
 import moment from 'moment';
+import { useMediaQuery } from '@mui/material';
+import { MoreOutlined, FileTextOutlined, PlusCircleOutlined, RollbackOutlined, PrinterOutlined, TruckOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
 export default function Sales() {
   const dispatch = useDispatch();
   const location = useLocation();
+  const isMobile = useMediaQuery('(max-width:768px)');
   const isStorePage = location.pathname.includes('/mystore');
   const [page,setPage] = useState(0);
-  const [pageSize,setPageSize] = useState(20);
+  const [pageSize,setPageSize] = useState(isMobile ? 10 : 20);
   const [totalItems,setTotalItems] = useState(0);
   const [searchText, setSearchText] = useState("");
   const [filteredData,setFilteredData] = useState([]);
@@ -60,7 +63,6 @@ export default function Sales() {
     fetchData();
   }, [dispatch, userInfo, storeId, isStorePage, page, pageSize, searchText]);
 
-
   const salesInfo = useSelector(state => state.sales.salesList);
   const storeInfo = useSelector(state => state.myStore.currentStore);
 
@@ -88,7 +90,7 @@ export default function Sales() {
   const [discount, setDiscount] = useState('');
   const [note, setNote] = useState('');
   const [receiptDate, setReceiptDate] = useState(null);
-  const [payAmount, setPayAmount] = useState(''); // New state for Pay Amount
+  const [payAmount, setPayAmount] = useState('');
 
   const aggregatedData = React.useMemo(() => {
     const groupedData = {};
@@ -123,7 +125,6 @@ export default function Sales() {
       taxRate: data.subtotal > 0 ? ((data.totalTax / data.subtotal) * 100).toFixed(2) : '0.00'
     }));
   }, [salesInfo]);
-
 
   useEffect(() => {
     if (salesInfo && salesInfo.length > 0) {
@@ -170,11 +171,10 @@ export default function Sales() {
     setNote(record.note || '');
     setReceiptDate(record.createdAt ? moment(record.createdAt) : null);
     
-    // Initialize payAmount only if remainBalance > 0
     if (record.remainBalance > 0) {
-      setPayAmount(''); // Empty string for user input
+      setPayAmount('');
     } else {
-      setPayAmount(0); // Default to 0 when not needed
+      setPayAmount(0);
     }
     
     setOpenReceiptModal(true);
@@ -188,25 +188,25 @@ export default function Sales() {
     setDiscount('');
     setNote('');
     setReceiptDate(null);
-    setPayAmount(''); // Reset payAmount
+    setPayAmount('');
   };
 
   const handleReceipt = (record, storeInfo) => {
     generateReceipt(record, storeInfo);
   };
 
-const handleGenerateReceipt = () => {
-  if (selectedRecord.remainBalance > 0) {
-    const payAmt = parseFloat(payAmount);
-    if (isNaN(payAmt) || payAmt <= 0) {
-      message.error("Please enter a valid Pay Amount greater than 0.");
-      return;
+  const handleGenerateReceipt = () => {
+    if (selectedRecord.remainBalance > 0) {
+      const payAmt = parseFloat(payAmount);
+      if (isNaN(payAmt) || payAmt <= 0) {
+        message.error("Please enter a valid Pay Amount greater than 0.");
+        return;
+      }
+      if (payAmt > selectedRecord.remainBalance) {
+        message.error("Pay Amount cannot exceed Amount Due.");
+        return;
+      }
     }
-    if (payAmt > selectedRecord.remainBalance) {
-      message.error("Pay Amount cannot exceed Amount Due.");
-      return;
-    }
-  }
     
     const installationDiscountDTO = {
       installation: includeInstallation,
@@ -217,7 +217,7 @@ const handleGenerateReceipt = () => {
       storeId: selectedRecord.store.id,
       invoiceNumber: selectedRecord.invoiceNumber,
       createdAt: receiptDate,
-      payAmount: selectedRecord.remainBalance > 0 ? parseFloat(payAmount) : 0, // Include payAmount
+      payAmount: selectedRecord.remainBalance > 0 ? parseFloat(payAmount) : 0,
     };
     
     dispatch(setReceipt(
@@ -255,12 +255,76 @@ const handleGenerateReceipt = () => {
     const accessoryDTO = {
       storeId: selectedRecord.store.id,
       invoiceNumber: selectedRecord.invoiceNumber,
-      price: parseFloat(accessoryPrice) || 0, // Ensure it's a number
+      price: parseFloat(accessoryPrice) || 0,
       model: accessoryName
     };
     dispatch(addAccessory(accessoryDTO, selectedRecord.store.id, page, pageSize, searchText, userInfo));
     handleCloseAccessory();
   };
+
+  // 移动端操作菜单
+  const getActionMenu = (record) => (
+    <Menu>
+      <Menu.Item key="accessory" icon={<PlusCircleOutlined />} onClick={() => handleOpenAccessory(record)}>
+        Add Accessory
+      </Menu.Item>
+      <Menu.Item key="return" icon={<RollbackOutlined />} onClick={() => handleOpenReturn(record)}>
+        Return
+      </Menu.Item>
+      <Menu.Item key="receipt-setup" icon={<FileTextOutlined />} onClick={() => handleOpenReceiptModal(record)}>
+        Set Up Receipt Info
+      </Menu.Item>
+      <Menu.Item key="receipt" icon={<PrinterOutlined />} onClick={() => handleReceipt(record, storeInfo)}>
+        Receipt
+      </Menu.Item>
+      <Menu.Item key="delivery" icon={<TruckOutlined />} onClick={() => generateDeliveryOrder(record, storeInfo)}>
+        Delivery Form
+      </Menu.Item>
+    </Menu>
+  );
+
+  // 移动端卡片视图
+  const MobileCardView = () => (
+    <div style={{ padding: '0 8px' }}>
+      {filteredData.map((record) => (
+        <Card
+          key={`${record.invoiceNumber}-${record.id}`}
+          style={{ 
+            marginBottom: '12px',
+            backgroundColor: record.remainBalance > 0 ? '#fff2f0' : '#fff',
+            borderColor: record.remainBalance > 0 ? '#ffccc7' : '#f0f0f0'
+          }}
+          size="small"
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ marginBottom: '8px' }}>
+                <strong style={{ fontSize: '16px' }}>{record.customer}</strong>
+                {record.remainBalance > 0 && (
+                  <Tag color="red" style={{ marginLeft: '8px' }}>Due: ${record.remainBalance.toFixed(2)}</Tag>
+                )}
+              </div>
+              
+              <Space direction="vertical" size={4} style={{ fontSize: '14px', color: '#666' }}>
+                <div>Invoice: #{record.invoiceNumber}</div>
+                <div>Date: {formatDate(record.createdAt)}</div>
+                <div>Contact: {record.contact}</div>
+                <div style={{ fontWeight: 'bold', color: '#000' }}>
+                  Total: ${record.total.toFixed(2)}
+                </div>
+              </Space>
+            </div>
+            
+            {(isStorePage || userInfo.role === 'user') && (
+              <Dropdown overlay={getActionMenu(record)} trigger={['click']}>
+                <Button type="text" icon={<MoreOutlined />} />
+              </Dropdown>
+            )}
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
 
   const columns = [
     ...(userInfo.role === 'admin' && !isStorePage ? [{
@@ -296,7 +360,7 @@ const handleGenerateReceipt = () => {
       dataIndex: 'remainBalance',
       key: 'remainBalance',
       render: (value) => {
-        const amount = value ?? 0; // Corrected line using Nullish Coalescing Operator
+        const amount = value ?? 0;
         return `$${parseFloat(amount).toFixed(2)}`;
       },
     },
@@ -332,50 +396,78 @@ const handleGenerateReceipt = () => {
           setPage(0);
         }}
         style={{ marginBottom: 16 }}
+        size={isMobile ? 'large' : 'middle'}
       />
+      
       <div style={{ position: 'relative', height: 'calc(100vh - 140px)' }}>
-      {loading ? (
-    <div
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: 'white',
-      zIndex: 10,
-    }}
-  >
+        {loading ? (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'white',
+              zIndex: 10,
+            }}
+          >
             <Spin tip="Loading..." size="large" />
           </div>
-      ):(
-      <Table
-        rowKey={(record) => `${record.invoiceNumber}-${record.id}`} // Ensure uniqueness
-        columns={columns}
-        dataSource={filteredData}
-        pagination={{
-          current:page + 1,
-          pageSize:pageSize,
-          total:totalItems,
-          showSizeChanger:true,
-          onChange:(newPage,newPageSize)=>{
-            setPage(newPage-1);
-            setPageSize(newPageSize);
-          }
-        }}
-        onRow={(record) => ({
-          style: {
-            backgroundColor: record.remainBalance > 0 ? '#ffe6e6' : '', // Light red background
-            color: record.remainBalance > 0 ? '#a8071a' : '', // Dark red text
-          },
-        })}
-      />
-      )
-    }
-    </div>
+        ) : (
+          isMobile ? (
+            <>
+              <div style={{ height: 'calc(100% - 48px)', overflow: 'auto' }}>
+                <MobileCardView />
+              </div>
+              <div style={{ 
+                position: 'sticky', 
+                bottom: 0, 
+                background: '#fff', 
+                padding: '8px',
+                borderTop: '1px solid #f0f0f0'
+              }}>
+                <Pagination
+                  current={page + 1}
+                  pageSize={pageSize}
+                  total={totalItems}
+                  showSizeChanger={false}
+                  onChange={(newPage) => {
+                    setPage(newPage - 1);
+                  }}
+                  simple
+                  size="small"
+                />
+              </div>
+            </>
+          ) : (
+            <Table
+              rowKey={(record) => `${record.invoiceNumber}-${record.id}`}
+              columns={columns}
+              dataSource={filteredData}
+              pagination={{
+                current:page + 1,
+                pageSize:pageSize,
+                total:totalItems,
+                showSizeChanger:true,
+                onChange:(newPage,newPageSize)=>{
+                  setPage(newPage-1);
+                  setPageSize(newPageSize);
+                }
+              }}
+              onRow={(record) => ({
+                style: {
+                  backgroundColor: record.remainBalance > 0 ? '#ffe6e6' : '',
+                  color: record.remainBalance > 0 ? '#a8071a' : '',
+                },
+              })}
+            />
+          )
+        )}
+      </div>
       
       {/* Cancel Order Modal */}
       <Modal
@@ -384,6 +476,8 @@ const handleGenerateReceipt = () => {
         onCancel={handleClose}
         destroyOnClose
         onOk={() => handleCancelOrder(selectedRecord.invoiceNumber, userInfo.role === 'admin' ? storeId : userInfo.storeId)}
+        width={isMobile ? '100%' : undefined}
+        style={isMobile ? { top: 20 } : {}}
       >
         <div>
           Click Ok to cancel this order.
@@ -397,6 +491,8 @@ const handleGenerateReceipt = () => {
         onCancel={handleCloseReturn}
         destroyOnClose
         footer={null}
+        width={isMobile ? '100%' : undefined}
+        style={isMobile ? { top: 20 } : {}}
       >
         <ReturnModalContent items={returnList} onReturn={handleReturnItems} />
       </Modal>
@@ -408,13 +504,16 @@ const handleGenerateReceipt = () => {
         onCancel={handleCloseAccessory}
         destroyOnClose
         onOk={handleAddAccessory}
+        width={isMobile ? '100%' : undefined}
+        style={isMobile ? { top: 20 } : {}}
       >
-        <Form>
+        <Form layout={isMobile ? 'vertical' : 'horizontal'}>
           <Form.Item label="Accessory Name" required>
             <Input
               value={accessoryName}
               onChange={e => setAccessoryName(e.target.value)}
               placeholder="Enter accessory name"
+              size={isMobile ? 'large' : 'middle'}
             />
           </Form.Item>
           <Form.Item label="Price" required>
@@ -425,6 +524,7 @@ const handleGenerateReceipt = () => {
               placeholder="Enter accessory price"
               min={0}
               addonBefore="$"
+              size={isMobile ? 'large' : 'middle'}
             />
           </Form.Item>
         </Form>
@@ -437,13 +537,16 @@ const handleGenerateReceipt = () => {
         onCancel={handleCloseReceiptModal}
         destroyOnClose
         onOk={handleGenerateReceipt}
+        width={isMobile ? '100%' : undefined}
+        style={isMobile ? { top: 20 } : {}}
       >
-        <Form>
+        <Form layout={isMobile ? 'vertical' : 'horizontal'}>
           <Form.Item label="Payment Type" required>
             <Select
               value={paymentType}
               onChange={value => setPaymentType(value)}
               placeholder="Select Payment Type"
+              size={isMobile ? 'large' : 'middle'}
             >
               <Option value="cash">Cash</Option>
               <Option value="card">Card</Option>
@@ -459,6 +562,7 @@ const handleGenerateReceipt = () => {
               value={note}
               onChange={e => setNote(e.target.value)}
               placeholder="Enter note"
+              size={isMobile ? 'large' : 'middle'}
             />
           </Form.Item>
           
@@ -469,6 +573,7 @@ const handleGenerateReceipt = () => {
               showTime
               value={receiptDate}
               style={{ width: '100%' }}
+              size={isMobile ? 'large' : 'middle'}
             />
           </Form.Item>
           
@@ -490,6 +595,7 @@ const handleGenerateReceipt = () => {
                 placeholder="Enter installation fee"
                 min={0}
                 addonBefore="$"
+                size={isMobile ? 'large' : 'middle'}
               />
             </Form.Item>
           )}
@@ -502,29 +608,32 @@ const handleGenerateReceipt = () => {
               placeholder="Enter discount"
               min={0}
               addonBefore="$"
+              size={isMobile ? 'large' : 'middle'}
             />
           </Form.Item>
           
           {selectedRecord?.remainBalance > 0 && (
-            <Form.Item label="Pay Amount"
-            rules={[
-              {
-                type:'number',
-                transform:(value)=>parseFloat(value),
-              },
-              {
-                validator:(_,value)=>{
-                  const amount = parseFloat(value);
-                                      if (isNaN(amount) || amount <= 0) {
+            <Form.Item 
+              label="Pay Amount"
+              rules={[
+                {
+                  type:'number',
+                  transform:(value)=>parseFloat(value),
+                },
+                {
+                  validator:(_,value)=>{
+                    const amount = parseFloat(value);
+                    if (isNaN(amount) || amount <= 0) {
                       return Promise.reject(new Error('Pay Amount must be greater than 0.'));
                     }
                     if (amount > selectedRecord.remainBalance) {
                       return Promise.reject(new Error('Pay Amount cannot exceed Amount Due.'));
                     }
                     return Promise.resolve();
+                  }
                 }
-              }
-            ]}>
+              ]}
+            >
               <Input
                 type="number"
                 value={payAmount}
@@ -532,6 +641,7 @@ const handleGenerateReceipt = () => {
                 placeholder="Enter pay amount"
                 min={0.01}
                 addonBefore="$"
+                size={isMobile ? 'large' : 'middle'}
               />
             </Form.Item>
           )}

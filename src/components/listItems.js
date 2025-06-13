@@ -14,18 +14,25 @@ import ProductForm from './ProductForm';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Button, ListItem } from '@mui/material';
-import { DeleteOutline } from '@mui/icons-material';
+import { Button, ListItem, Tooltip, IconButton } from '@mui/material';
+import { DeleteOutline, AddShoppingCart } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
-import { Modal,List,Typography,Pagination } from 'antd';
+import { Modal,List,Typography,Pagination, Drawer } from 'antd';
 import { removeFromCart } from '../redux/modules/cart';
 import { getUserInfo } from '../redux/modules/user';
 import { clearCart } from '../redux/modules/cart';
+import { useMediaQuery, useTheme } from '@mui/material';
+import { CloseOutlined } from '@ant-design/icons';
+
 export default function MainListItems({isShowStore,onItemClick}){
   /* eslint-disable */
   const dispatch = useDispatch();
   const [open,setOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // 检测是否为移动设备
+  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm')); // 检测是否为小屏幕手机
+  
   const handleOpen = () =>{
     setOpen(true);
   }
@@ -54,11 +61,238 @@ export default function MainListItems({isShowStore,onItemClick}){
   const location = useLocation();
   const isStorePage = location.pathname.includes('/mystore');
   const [loading, setLoading] = useState(false);
+
+  // 移动端使用 Drawer，桌面端使用 Modal
+  const renderOrderForm = () => {
+    if (isMobile) {
+      return (
+        <Drawer
+          title={
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              paddingRight: '24px'
+            }}>
+              <span>Create Order</span>
+              <Button 
+                type="text" 
+                onClick={handleClose}
+                icon={<CloseOutlined />}
+                style={{ 
+                  fontSize: '16px',
+                  color: '#666'
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          }
+          open={open}
+          onClose={handleClose}
+          width="100%"
+          height="100%"
+          placement="bottom"
+          style={{ height: '100vh' }}
+          closable={true}
+          destroyOnClose
+        >
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            height: '100%',
+            overflow: 'auto'
+          }}>
+            {/* 移动端购物车放在顶部，可折叠 */}
+            <div style={{ 
+              borderBottom: '1px solid #f0f0f0', 
+              marginBottom: '16px',
+              paddingBottom: '16px' 
+            }}>
+              <List
+                header={<div style={{textAlign:'center', fontWeight: 'bold'}}>Cart ({cartInfo.length} items)</div>}
+                bordered
+                dataSource={currentItems}
+                size="small"
+                renderItem={(item) => (
+                  <List.Item style={{display:'flex',justifyContent:'space-between'}}>
+                    <div>
+                      <Typography.Text>{item.type}: {item.model} <br/> Price: ${item.price}</Typography.Text>
+                    </div>
+                    <Button type="primary" onClick={() => handleRemoveItem(item.id)}><DeleteOutline/></Button>
+                  </List.Item>
+                )}
+              />
+              {cartInfo.length > pageSize && (
+                <Pagination
+                  current={currentPage}
+                  onChange={page=>setCurrentPage(page)}
+                  total={cartInfo.length}
+                  pageSize={pageSize}
+                  showSizeChanger={false}
+                  size="small"
+                  style={{ marginTop: '8px', textAlign: 'center' }}
+                />
+              )}
+            </div>
+            
+            {/* 产品表单 */}
+            <div style={{ flex: 1, overflow: 'auto' }}>
+              <ProductForm handleClose={handleClose}/>
+            </div>
+          </div>
+        </Drawer>
+      );
+    } else {
+      // 桌面端保持原有布局
+      return (
+        <Modal
+          title="Create Order"
+          open={open}
+          onCancel={handleClose}
+          footer={null}
+          width="80vw"
+          centered
+          destroyOnClose
+        >
+          <div className="container" style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            width: '100%',
+            gap: '20px'
+          }}>
+            <div className="leftPanel" style={{ flex:'1 1 70%', minWidth: 0 }}>
+              <ProductForm handleClose={handleClose}/>
+            </div>
+
+            <div className="rightPanel" style={{ flex: '0 0 30%', minWidth: '250px' }}>
+              <List
+                header={<div style={{textAlign:'center'}}>Cart</div>}
+                bordered
+                dataSource={currentItems}
+                renderItem={(item) => (
+                  <List.Item style={{display:'flex',justifyContent:'space-between'}}>
+                    <div>
+                      <Typography.Text>{item.type}: {item.model} <br/> Price: ${item.price}</Typography.Text>
+                    </div>
+                    <Button type="primary" onClick={() => handleRemoveItem(item.id)}><DeleteOutline/></Button>
+                  </List.Item>
+                )}
+              />
+              <Pagination
+                current={currentPage}
+                onChange={page=>setCurrentPage(page)}
+                total={cartInfo.length}
+                pageSize={pageSize}
+                showSizeChanger={false}
+              />
+            </div>
+          </div>
+        </Modal>
+      );
+    }
+  };
+
+  // 渲染菜单项的函数
+  const renderMenuItem = (to, icon, text, onClick) => {
+    if (isSmallMobile) {
+      // 小屏幕只显示图标
+      return (
+        <Tooltip title={text} placement="right">
+          <ListItemButton 
+            component={Link} 
+            to={to} 
+            onClick={() => onClick && onClick(text)}
+            sx={{ 
+              justifyContent: 'center',
+              px: 1 
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 'auto' }}>
+              {icon}
+            </ListItemIcon>
+          </ListItemButton>
+        </Tooltip>
+      );
+    }
+    
+    // 正常显示图标和文字
+    return (
+      <ListItemButton component={Link} to={to} onClick={() => onClick && onClick(text)}>
+        <ListItemIcon>
+          {icon}
+        </ListItemIcon>
+        <ListItemText primary={text} />
+      </ListItemButton>
+    );
+  };
+
   return (
   <React.Fragment>
-
-      <ListItem>
+      <ListItem sx={{ px: isSmallMobile ? 1 : 2 }}>
       {!isShowStore &&(
+        isSmallMobile ? (
+          <Tooltip title="Create Order" placement="right">
+            <IconButton
+              color="primary"
+              size="large"
+              onClick={handleOpen}
+              sx={{ 
+                backgroundColor: 'primary.main',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'primary.dark',
+                },
+                width: '48px',
+                height: '48px'
+              }}
+            >
+              <AddShoppingCart />
+            </IconButton>
+          </Tooltip>
+        ) : (
+          <Button
+            variant="contained"
+            color="primary"
+            size="large" 
+            sx={{ width: '100%', maxWidth: 360, fontSize: '1.1rem', py: 1.5 }} 
+            onClick={handleOpen}
+          >
+            Create Order
+          </Button>
+        )
+      )}
+      {renderOrderForm()}
+    </ListItem>
+    {!isStorePage?(<>
+    {isShowStore && renderMenuItem("/store", <StoreIcon />, "Store", onItemClick)}
+    {renderMenuItem("/sales", <ShoppingCartIcon />, "Sales", onItemClick)}
+    {renderMenuItem("/inventory", <InventoryIcon />, "Inventory", onItemClick)}
+    {!isShowStore && renderMenuItem("/delivery", <LocalShippingIcon />, "Delivery", onItemClick)}
+    {isShowStore && renderMenuItem("/reports", <SummarizeIcon />, "Reports", onItemClick)}
+    {renderMenuItem("/profile", <AccountCircleIcon />, "Profile", onItemClick)}
+</>):(<>
+  <ListItem sx={{ px: isSmallMobile ? 1 : 2 }}>
+    {isSmallMobile ? (
+      <Tooltip title="Create Order" placement="right">
+        <IconButton
+          color="primary"
+          size="large"
+          onClick={handleOpen}
+          sx={{ 
+            backgroundColor: 'primary.main',
+            color: 'white',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
+            },
+            width: '48px',
+            height: '48px'
+          }}
+        >
+          <AddShoppingCart />
+        </IconButton>
+      </Tooltip>
+    ) : (
       <Button
         variant="contained"
         color="primary"
@@ -68,159 +302,17 @@ export default function MainListItems({isShowStore,onItemClick}){
       >
         Create Order
       </Button>
-      )}
-        <Modal
-      title="Create Order"
-      open={open}
-      onCancel={handleClose}
-      footer={null}
-      width="80vw"
-      style={{ left: '10vh' }} 
-      destroyOnClose
-    >
-    <div className="container" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-    <div className="leftPanel" style={{ flex:'75%', margin: '10px' }}>
-      <ProductForm handleClose={handleClose}/>
-    </div>
-
-    <div className="rightPanel" style={{ flex: '25%', margin: '10px' }}>
-    <List
-      header={<div style={{textAlign:'center'}}>Cart</div>}
-      bordered
-      dataSource={currentItems}
-      renderItem={(item) => (
-        <List.Item style={{display:'flex',justifyContent:`space-between`}}>
-      <div>
-          <Typography.Text>{item.type}: {item.model} <br/> Price: ${item.price}</Typography.Text>
-      </div>
-      <Button type="primary" onClick={() => handleRemoveItem(item.id)}><DeleteOutline/></Button>
-        </List.Item>
-      )}
-    />
-    <Pagination
-      current={currentPage}
-      onChange={page=>setCurrentPage(page)}
-      total={cartInfo.length}
-      pageSize={pageSize}
-      showSizeChanger={false}
-      />
-    </div>
-    </div>
-    </Modal>
-    </ListItem>
-    {!isStorePage?(<>
-    {isShowStore &&(
-    <ListItemButton component={Link} to="/store" onClick={()=>onItemClick("Store")}>
-        <ListItemIcon>
-          <StoreIcon />
-        </ListItemIcon>
-        <ListItemText primary="Store" />
-      </ListItemButton>
     )}
-          <ListItemButton component={Link} to={`/sales`} onClick={()=>onItemClick("Sales")}>
-          <ListItemIcon>
-            <ShoppingCartIcon />
-          </ListItemIcon>
-          <ListItemText primary="Sales" />
-        </ListItemButton>
+  </ListItem>
 
-    <ListItemButton component={Link} to="/inventory" onClick={()=>onItemClick("Inventory")} >
-      <ListItemIcon>
-        <InventoryIcon />
-      </ListItemIcon>
-      <ListItemText primary="Inventory"  />
-    </ListItemButton>
-    
-    {!isShowStore &&(<ListItemButton component={Link} to="/delivery" onClick={()=>onItemClick("delivery")} >
-      <ListItemIcon>
-        <LocalShippingIcon />
-      </ListItemIcon>
-      <ListItemText primary="Delivery"  />
-    </ListItemButton>
-    )}
-
-    {isShowStore &&(
-    <ListItemButton component={Link} to = {`/reports`} onClick={()=>onItemClick("Reports")}>
-    <ListItemIcon>
-      <SummarizeIcon />
-    </ListItemIcon>
-    <ListItemText primary="Reports" />
-  </ListItemButton>
-    )}
-
-    <ListItemButton component={Link} to="/profile" onClick={()=>onItemClick("Profile")}>
-        <ListItemIcon>
-          <AccountCircleIcon />
-        </ListItemIcon>
-        <ListItemText primary="Profile" />
-      </ListItemButton>
-</>):(<>
-  <Button
-        variant="contained"
-        color="primary"
-        size="large" 
-        sx={{ width: '100%', maxWidth: 360, fontSize: '1.1rem', py: 1.5 }} 
-        onClick={handleOpen}
-      >
-        Create Order
-      </Button>
-
-  <ListItemButton component={Link} to="/store/" onClick={()=>onItemClick("Store")}>
-      <ListItemIcon>
-        <ArrowBackIcon />
-      </ListItemIcon>
-      <ListItemText primary="Back" />
-    </ListItemButton>
-
-    <ListItemButton component={Link} to={`/store/mystore/${store_id}`} >
-      <ListItemIcon>
-        <AccountCircleIcon />
-      </ListItemIcon>
-      <ListItemText primary="Manage Account"  />
-    </ListItemButton>
-
-  <ListItemButton component={Link} to={`/store/mystore/inventory/${store_id}`} onClick={()=>onItemClick("Inventory")} >
-      <ListItemIcon>
-        <InventoryIcon />
-      </ListItemIcon>
-      <ListItemText primary="Store Inventory"  />
-    </ListItemButton>
-
-    <ListItemButton component={Link} to={`/store/mystore/sales/${store_id}`} onClick={()=>onItemClick("Sales")}>
-      <ListItemIcon>
-        <BarChartIcon />
-      </ListItemIcon>
-      <ListItemText primary="Sales" />
-    </ListItemButton>
-
-    <ListItemButton component={Link} to={`/store/mystore/return/${store_id}`} onClick={()=>onItemClick("Sales")}>
-      <ListItemIcon>
-        <BarChartIcon />
-      </ListItemIcon>
-      <ListItemText primary="Return Item" />
-    </ListItemButton>
-
-    <ListItemButton component={Link} to={`/store/mystore/delivery/${store_id}`} onClick={()=>onItemClick("Delivery")}>
-      <ListItemIcon>
-        <LocalShippingIcon />
-      </ListItemIcon>
-      <ListItemText primary="Delivery" />
-    </ListItemButton>
-
-    <ListItemButton component={Link} to = {`/store/mystore/sales/reports/${store_id}`} onClick={()=>onItemClick("Reports")}>
-      <ListItemIcon>
-        <SummarizeIcon />
-      </ListItemIcon>
-      <ListItemText primary="Reports" />
-    </ListItemButton>
-
-    <ListItemButton component={Link} to = {`/store/mystore/settings/${store_id}`} onClick={()=>onItemClick("Settings")}>
-      <ListItemIcon>
-        <SettingsIcon />
-      </ListItemIcon>
-      <ListItemText primary="Store Settings" />
-    </ListItemButton>
+  {renderMenuItem("/store/", <ArrowBackIcon />, "Back", onItemClick)}
+  {renderMenuItem(`/store/mystore/${store_id}`, <AccountCircleIcon />, "Manage Account", null)}
+  {renderMenuItem(`/store/mystore/inventory/${store_id}`, <InventoryIcon />, "Store Inventory", onItemClick)}
+  {renderMenuItem(`/store/mystore/sales/${store_id}`, <BarChartIcon />, "Sales", onItemClick)}
+  {renderMenuItem(`/store/mystore/return/${store_id}`, <BarChartIcon />, "Return Item", onItemClick)}
+  {renderMenuItem(`/store/mystore/delivery/${store_id}`, <LocalShippingIcon />, "Delivery", onItemClick)}
+  {renderMenuItem(`/store/mystore/sales/reports/${store_id}`, <SummarizeIcon />, "Reports", onItemClick)}
+  {renderMenuItem(`/store/mystore/settings/${store_id}`, <SettingsIcon />, "Store Settings", onItemClick)}
 </>)}
   </React.Fragment>)
 };
-

@@ -1,5 +1,7 @@
+// src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
-import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
+import { styled, createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import CssBaseline from '@mui/material/CssBaseline';
 import MuiDrawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
@@ -20,10 +22,60 @@ import { Outlet, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUserInfo, clearUserInfo } from '../redux/modules/user';
 import { Popconfirm } from 'antd';
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
 
-// Copyright Component
+// 常量：侧边栏宽度
+const DESKTOP_DRAWER_WIDTH = 240;
+const MOBILE_DRAWER_WIDTH = 64;
+
+// Styled AppBar（保持不变）
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})(({ theme, open }) => ({
+  zIndex: theme.zIndex.drawer + 1,
+  transition: theme.transitions.create(['width', 'margin'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  ...(open && {
+    marginLeft: DESKTOP_DRAWER_WIDTH,
+    width: `calc(100% - ${DESKTOP_DRAWER_WIDTH}px)`,
+    transition: theme.transitions.create(['width', 'margin'], {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  }),
+}));
+
+// Styled permanent Drawer（desktop 用），collapsed 宽度仍由 styled 控制
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})(({ theme, open }) => ({
+  '& .MuiDrawer-paper': {
+    position: 'relative',
+    whiteSpace: 'nowrap',
+    width: DESKTOP_DRAWER_WIDTH,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+    boxSizing: 'border-box',
+    ...(!open && {
+      overflowX: 'hidden',
+      transition: theme.transitions.create('width', {
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen,
+      }),
+      width: theme.spacing(7),      // 折叠时的窄宽度
+      [theme.breakpoints.up('sm')]: {
+        width: theme.spacing(9),    // 稍微宽一点
+      },
+    }),
+  },
+}));
+
+const defaultTheme = createTheme();
+
+// 版权组件（不变）
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
@@ -37,86 +89,32 @@ function Copyright(props) {
   );
 }
 
-// Drawer Width
-const drawerWidth = 240;
-
-// Styled AppBar with conditional styling based on drawer state
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
-  zIndex: theme.zIndex.drawer + 1, // Ensure AppBar is above the drawer
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open && {
-    marginLeft: drawerWidth, // Shift AppBar when drawer is open
-    width: `calc(100% - ${drawerWidth}px)`, // Adjust width accordingly
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  }),
-}));
-
-// Styled Drawer with conditional styling based on open state
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-    '& .MuiDrawer-paper': {
-      position: 'relative',
-      whiteSpace: 'nowrap',
-      width: drawerWidth, // Set drawer width
-      transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-      boxSizing: 'border-box',
-      ...(!open && {
-        overflowX: 'hidden', // Hide overflow when closed
-        transition: theme.transitions.create('width', {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.leavingScreen,
-        }),
-        width: theme.spacing(7), // Collapsed width
-        [theme.breakpoints.up('sm')]: {
-          width: theme.spacing(9), // Slightly wider on larger screens
-        },
-      }),
-    },
-  }),
-);
-
-// Default Theme
-const defaultTheme = createTheme();
-
-// Dashboard Component
 export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { storeId } = useParams();
 
-  // Fetch user info on component mount
+  // 主题 & 响应式
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Drawer 状态：desktopOpen 仅影响桌面端；mobileOpen 仅影响手机端
+  const [desktopOpen, setDesktopOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // 标题栏文字
+  const [title, setTitle] = useState('Dashboard');
+
+  // 拉取用户信息
   useEffect(() => {
     dispatch(getUserInfo());
   }, [dispatch]);
 
-  // Select user info from Redux store
   const userInfo = useSelector(state => state.user.userInfo);
-  const isShowStore = userInfo.role === "admin";
+  const isShowStore = userInfo.role === 'admin';
 
-  // Access theme and define media query for mobile
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Mobile if screen size is 'sm' or below
-
-  // Drawer states
-  const [desktopOpen, setDesktopOpen] = useState(true); // Drawer open state for desktop
-  const [mobileOpen, setMobileOpen] = useState(false);  // Drawer open state for mobile
-
-  // Title state for the AppBar
-  const [title, setTitle] = useState("Dashboard");
-
-  // Toggle function for drawer
+  // 切换 Drawer
   const toggleDrawer = () => {
     if (isMobile) {
       setMobileOpen(!mobileOpen);
@@ -125,15 +123,13 @@ export default function Dashboard() {
     }
   };
 
-  // Handle navigation item click
-  const handleItemClick = (title) => {
-    setTitle(title);
-    if (isMobile) {
-      setMobileOpen(false); // Close mobile drawer after selection
-    }
+  // 菜单点击，设置标题，手机端自动收起
+  const handleItemClick = (newTitle) => {
+    setTitle(newTitle);
+    if (isMobile) setMobileOpen(false);
   };
 
-  // Logout function with confirmation
+  // 登出
   const logout = () => {
     dispatch(clearUserInfo());
     navigate('/login');
@@ -146,12 +142,7 @@ export default function Dashboard() {
 
         {/* AppBar */}
         <AppBar position="absolute" open={desktopOpen && !isMobile}>
-          <Toolbar
-            sx={{
-              pr: '24px', // Keep right padding when drawer closed
-            }}
-          >
-            {/* Menu Button */}
+          <Toolbar sx={{ pr: '24px' }}>
             <IconButton
               edge="start"
               color="inherit"
@@ -159,12 +150,11 @@ export default function Dashboard() {
               onClick={toggleDrawer}
               sx={{
                 marginRight: '36px',
-                ...(desktopOpen && !isMobile && { display: 'none' }), // Hide on desktop when drawer is open
+                ...(desktopOpen && !isMobile && { display: 'none' }),
               }}
             >
               <MenuIcon />
             </IconButton>
-            {/* Title */}
             <Typography
               component="h1"
               variant="h6"
@@ -174,7 +164,6 @@ export default function Dashboard() {
             >
               {title}
             </Typography>
-            {/* Logout Icon */}
             <IconButton color="inherit">
               <Popconfirm
                 title="Log Out"
@@ -190,72 +179,86 @@ export default function Dashboard() {
           </Toolbar>
         </AppBar>
 
-        {/* Permanent Drawer for Desktop */}
+        {/* 桌面端：永久 Drawer */}
         {!isMobile && (
-          <Drawer variant="permanent" open={desktopOpen}>
-            <Toolbar
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                px: [1],
-              }}
-            >
-              {/* Close Drawer Button */}
+          <Drawer
+            variant="permanent"
+            open={desktopOpen}
+            sx={{
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: desktopOpen
+                  ? DESKTOP_DRAWER_WIDTH
+                  : theme.spacing(9),
+                overflowX: 'hidden',
+              },
+            }}
+          >
+            <Toolbar sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              px: [1],
+            }}>
               <IconButton onClick={toggleDrawer}>
                 <ChevronLeftIcon />
               </IconButton>
             </Toolbar>
             <Divider />
             <List component="nav">
-              <MainListItems isShowStore={isShowStore} onItemClick={handleItemClick} />
+              <MainListItems
+                isShowStore={isShowStore}
+                onItemClick={handleItemClick}
+                isMobile={false}
+              />
               <Divider sx={{ my: 1 }} />
             </List>
           </Drawer>
         )}
 
-        {/* Temporary Drawer for Mobile */}
+        {/* 手机端：临时 Drawer */}
         {isMobile && (
           <MuiDrawer
             variant="temporary"
             open={mobileOpen}
             onClose={toggleDrawer}
-            ModalProps={{
-              keepMounted: true, // Better open performance on mobile
-            }}
+            ModalProps={{ keepMounted: true }}
             sx={{
-              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: MOBILE_DRAWER_WIDTH,
+              },
             }}
           >
-            <Toolbar
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                px: [1],
-              }}
-            >
-              {/* Close Drawer Button */}
+            <Toolbar sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              px: [1],
+            }}>
               <IconButton onClick={toggleDrawer}>
                 <ChevronLeftIcon />
               </IconButton>
             </Toolbar>
             <Divider />
             <List component="nav">
-              <MainListItems isShowStore={isShowStore} onItemClick={handleItemClick} />
+              <MainListItems
+                isShowStore={isShowStore}
+                onItemClick={handleItemClick}
+                isMobile={true}
+              />
               <Divider sx={{ my: 1 }} />
             </List>
           </MuiDrawer>
         )}
 
-        {/* Main Content Area */}
+        {/* 主内容区 */}
         <Box
           component="main"
           sx={{
-            backgroundColor: (theme) =>
-              theme.palette.mode === 'light'
-                ? theme.palette.grey[100]
-                : theme.palette.grey[900],
+            backgroundColor: theme.palette.mode === 'light'
+              ? theme.palette.grey[100]
+              : theme.palette.grey[900],
             flexGrow: 1,
             height: '100vh',
             overflow: 'auto',
@@ -263,18 +266,18 @@ export default function Dashboard() {
         >
           <Toolbar />
           <Container
-  maxWidth={false} // This allows the container to take full width
-  sx={{
-    mt: 2,
-    mb: 2,
-    px: isMobile ? 2 : 4, // You can adjust this padding if needed
-  }}
->
-  <Grid container spacing={1}>
-    <Outlet />
-  </Grid>
-  <Copyright sx={{ pt: 4 }} />
-</Container>
+            maxWidth={false}
+            sx={{
+              mt: 2,
+              mb: 2,
+              px: isMobile ? 2 : 4,
+            }}
+          >
+            <Grid container spacing={1}>
+              <Outlet />
+            </Grid>
+            <Copyright sx={{ pt: 4 }} />
+          </Container>
         </Box>
       </Box>
     </ThemeProvider>
