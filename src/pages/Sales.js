@@ -92,40 +92,49 @@ export default function Sales() {
   const [receiptDate, setReceiptDate] = useState(null);
   const [payAmount, setPayAmount] = useState('');
 
-  const aggregatedData = React.useMemo(() => {
-    const groupedData = {};
-    if (salesInfo) {
-      salesInfo.forEach((item) => {
-        const key = `${item.store.id}-${item.invoiceNumber}`;
-        if (!groupedData[key]) {
-          groupedData[key] = {
-            ...item,
-            total: 0,
-            subtotal: 0,
-            totalTax: 0,
-            items: [],
-            deliveryFee: parseFloat(item.deliveryFee) || 0,
-            taxRate: 0,
-            totalAfterDiscount: 0
-          };
-        }
-        groupedData[key].subtotal += parseFloat(item.price) || 0;
-        groupedData[key].total += parseFloat(item.price) || 0;
-        groupedData[key].total += parseFloat(item.warrantyPrice) || 0;
-        groupedData[key].total += parseFloat(item.taxes) || 0;
-        groupedData[key].total -= parseFloat(item.discount) || 0;
-        groupedData[key].total += parseFloat(item.installationFee) || 0;
-        groupedData[key].totalTax += parseFloat(item.taxes) || 0;
-        groupedData[key].items.push(item);
-      });
-    }
-    return Object.values(groupedData).map(data => ({
-      ...data,
-      total: parseFloat((data.total + parseFloat(data.deliveryFee)).toFixed(2)),
-      taxRate: data.subtotal > 0 ? ((data.totalTax / data.subtotal) * 100).toFixed(2) : '0.00'
-    }));
-  }, [salesInfo]);
+const aggregatedData = React.useMemo(() => {
+  if (!salesInfo) return [];
+  // salesInfo: [{ invoiceNumber, sales: [...] }]
+  return salesInfo.map(group => {
+    // group.sales 是明细数组
+    let subtotal = 0, total = 0, totalTax = 0, deliveryFee = 0;
+    let customer = '', contact = '', createdAt = '', remainBalance = 0, id = undefined;
+    let items = [];
+    group.sales.forEach(item => {
+      subtotal += parseFloat(item.price) || 0;
+      total += parseFloat(item.price) || 0;
+      total += parseFloat(item.warrantyPrice) || 0;
+      total += parseFloat(item.taxes) || 0;
+      total -= parseFloat(item.discount) || 0;
+      total += parseFloat(item.installationFee) || 0;
+      totalTax += parseFloat(item.taxes) || 0;
+      deliveryFee = parseFloat(item.deliveryFee) || 0;
+      if (!customer) customer = item.customer;
+      if (!contact) contact = item.contact;
+      if (!createdAt) createdAt = item.createdAt;
+      if (!id) id = item.id;
+      if (!remainBalance) remainBalance = parseFloat(item.remainBalance) || 0;
+      items.push(item);
+    });
+    total = parseFloat((total + deliveryFee).toFixed(2));
+    return {
+      invoiceNumber: group.invoiceNumber,
+      customer,
+      contact,
+      createdAt,
+      subtotal,
+      total,
+      totalTax,
+      taxRate: subtotal > 0 ? ((totalTax / subtotal) * 100).toFixed(2) : '0.00',
+      deliveryFee,
+      remainBalance,
+      items,
+      id,
+    };
+  });
+}, [salesInfo]);
 
+  console.log(aggregatedData)
   useEffect(() => {
     if (salesInfo && salesInfo.length > 0) {
       setFilteredData(aggregatedData);

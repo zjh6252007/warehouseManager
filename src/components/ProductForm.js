@@ -184,52 +184,52 @@ const ProductForm = ({ handleClose }) => {
     return { totalPrice, calculatedTax };
   };
 
-  const renderProductDescriptions = item => {
-    return (
-      <Descriptions bordered>
-        <Descriptions.Item label="Model">{item.model}</Descriptions.Item>
-        <Descriptions.Item label="Product Type">{item.type}</Descriptions.Item>
-        <Descriptions.Item label="Price">${item.price}</Descriptions.Item>
-        <Descriptions.Item label="Free Warranty">
-          {item.freewarranty ? `${item.freewarranty} Years` : 'N/A'}
-        </Descriptions.Item>
-        <Descriptions.Item label="Extended Warranty">
-          {item.extendedwarranty ? `${item.extendedwarranty} Years` : 'N/A'}
-        </Descriptions.Item>
-        <Descriptions.Item label="Warranty Price">
-          {item.warrantyPrice ? `$${item.warrantyPrice * item.extendedwarranty}` : 'N/A'}
-        </Descriptions.Item>
-        <Descriptions.Item label="Serial Number" span={1}>
-          {item.serialNumber}
-        </Descriptions.Item>
-      </Descriptions>
-    );
-  };
+const renderProductDescriptions = item => {
+  return (
+    <Descriptions bordered column={2} /* 这里指定2列, 可调整为1,2,3,4*/>
+      <Descriptions.Item label="Model">{item.model}</Descriptions.Item>
+      <Descriptions.Item label="Product Type">{item.type}</Descriptions.Item>
+      <Descriptions.Item label="Price">${item.price}</Descriptions.Item>
+      <Descriptions.Item label="Free Warranty">
+        {item.freewarranty ? `${item.freewarranty} Years` : 'N/A'}
+      </Descriptions.Item>
+      <Descriptions.Item label="Extended Warranty">
+        {item.extendedwarranty ? `${item.extendedwarranty} Years` : 'N/A'}
+      </Descriptions.Item>
+      <Descriptions.Item label="Warranty Price">
+        {item.warrantyPrice ? `$${item.warrantyPrice * item.extendedwarranty}` : 'N/A'}
+      </Descriptions.Item>
+      <Descriptions.Item label="Serial Number" span={2}>
+        {item.serialNumber}
+      </Descriptions.Item>
+    </Descriptions>
+  );
+};
 
-  const renderOtherDescriptions = (customer, cart) => {
-    const { totalPrice, calculatedTax } = calculateTotalPrice(customer, cart);
+const renderOtherDescriptions = (customer, cart) => {
+  const { totalPrice, calculatedTax } = calculateTotalPrice(customer, cart);
 
-    return (
-      <Descriptions bordered style={{ marginBottom: 15 }}>
-        <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
-        <Descriptions.Item label="Address">{customer.address}</Descriptions.Item>
-        <Descriptions.Item label="Phone">{customer.contact || 'N/A'}</Descriptions.Item>
-        <Descriptions.Item label="Sales">{customer.sales || 'N/A'}</Descriptions.Item>
-        <Descriptions.Item label="Delivery Date">{customer.deliveryDate || 'N/A'}</Descriptions.Item>
-        <Descriptions.Item label="Delivery Fee">${customer.deliveryFee || 'N/A'}</Descriptions.Item>
-        <Descriptions.Item label="Discount">${customer.discount || '0'}</Descriptions.Item>
-        {calculatedTax > 0 && (
-          <Descriptions.Item label="Tax">${calculatedTax.toFixed(2)}</Descriptions.Item>
-        )}
-        {customer.invoiceNumber && (
-          <Descriptions.Item label="Invoice Number">{customer.invoiceNumber}</Descriptions.Item>
-        )}
-        <Descriptions.Item label="Total Price" style={{ color: 'red' }}>
-          ${totalPrice.toFixed(2)}
-        </Descriptions.Item>
-      </Descriptions>
-    );
-  };
+  return (
+    <Descriptions bordered column={2} style={{ marginBottom: 15 }}>
+      <Descriptions.Item label="Customer Name">{customer.customer}</Descriptions.Item>
+      <Descriptions.Item label="Address">{customer.address}</Descriptions.Item>
+      <Descriptions.Item label="Phone">{customer.contact || 'N/A'}</Descriptions.Item>
+      <Descriptions.Item label="Sales">{customer.sales || 'N/A'}</Descriptions.Item>
+      <Descriptions.Item label="Delivery Date">{customer.deliveryDate || 'N/A'}</Descriptions.Item>
+      <Descriptions.Item label="Delivery Fee">${customer.deliveryFee || 'N/A'}</Descriptions.Item>
+      <Descriptions.Item label="Discount">${customer.discount || '0'}</Descriptions.Item>
+      {calculatedTax > 0 && (
+        <Descriptions.Item label="Tax">${calculatedTax.toFixed(2)}</Descriptions.Item>
+      )}
+      {customer.invoiceNumber && (
+        <Descriptions.Item label="Invoice Number">{customer.invoiceNumber}</Descriptions.Item>
+      )}
+      <Descriptions.Item label="Total Price" style={{ color: 'red' }}>
+        ${totalPrice.toFixed(2)}
+      </Descriptions.Item>
+    </Descriptions>
+  );
+};
 
   const validateUnitPrice = (_, value) => {
     if (selectedModel) {
