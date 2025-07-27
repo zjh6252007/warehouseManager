@@ -93,14 +93,13 @@ export default function Sales() {
   const [payAmount, setPayAmount] = useState('');
 
 const aggregatedData = React.useMemo(() => {
-  if (!salesInfo) return [];
-  // salesInfo: [{ invoiceNumber, sales: [...] }]
+  if (!Array.isArray(salesInfo)) return [];
   return salesInfo.map(group => {
-    // group.sales 是明细数组
+    const sales = Array.isArray(group.sales) ? group.sales : [];
+    // 取第一个明细的字段
+    const base = sales[0] || {};
     let subtotal = 0, total = 0, totalTax = 0, deliveryFee = 0;
-    let customer = '', contact = '', createdAt = '', remainBalance = 0, id = undefined;
-    let items = [];
-    group.sales.forEach(item => {
+    sales.forEach(item => {
       subtotal += parseFloat(item.price) || 0;
       total += parseFloat(item.price) || 0;
       total += parseFloat(item.warrantyPrice) || 0;
@@ -109,30 +108,33 @@ const aggregatedData = React.useMemo(() => {
       total += parseFloat(item.installationFee) || 0;
       totalTax += parseFloat(item.taxes) || 0;
       deliveryFee = parseFloat(item.deliveryFee) || 0;
-      if (!customer) customer = item.customer;
-      if (!contact) contact = item.contact;
-      if (!createdAt) createdAt = item.createdAt;
-      if (!id) id = item.id;
-      if (!remainBalance) remainBalance = parseFloat(item.remainBalance) || 0;
-      items.push(item);
     });
     total = parseFloat((total + deliveryFee).toFixed(2));
     return {
       invoiceNumber: group.invoiceNumber,
-      customer,
-      contact,
-      createdAt,
+      customer: base.customer,
+      contact: base.contact,
+      createdAt: base.createdAt,
+      address: base.address,
+      paymentType: base.paymentType,
+      note: base.note,
+      transport: base.transport,
+      salesperson: base.salesperson,
+      model: base.model,
+      serialNumber: base.serialNumber,
       subtotal,
       total,
       totalTax,
       taxRate: subtotal > 0 ? ((totalTax / subtotal) * 100).toFixed(2) : '0.00',
       deliveryFee,
-      remainBalance,
-      items,
-      id,
+      remainBalance: base.remainBalance,
+      items: sales,
+      id: base.id,
+      store: base.store,
     };
   });
 }, [salesInfo]);
+
 
   console.log(aggregatedData)
   useEffect(() => {
