@@ -174,7 +174,7 @@ const ProductForm = ({ handleClose }) => {
       totalPrice -= parseFloat(customer.discount);
     }
 
-    const _taxRate = taxRate || store_info.taxRate;
+    const _taxRate = taxRate || store_info?.taxRate;
     let calculatedTax = 0;
     if (_taxRate) {
       calculatedTax = totalPrice * _taxRate * 0.01;
@@ -679,14 +679,14 @@ const renderOtherDescriptions = (customer, cart) => {
           </ProForm.Group>
 
           {/* Conditionally Render Invoice Number Field */}
-          {store_info.modifyInvoiceNumber && (
-            <ProFormText
-              name="invoiceNumber"
-              label="Invoice Number"
-              placeholder="Enter invoice number"
-              rules={[{ required: true, message: 'Please enter the invoice number' }]}
-            />
-          )}
+{store_info?.modifyInvoiceNumber && (
+  <ProFormText
+    name="invoiceNumber"
+    label="Invoice Number"
+    placeholder="Enter invoice number"
+    rules={[{ required: true, message: 'Please enter the invoice number' }]}
+  />
+)}
 
           <ProFormText
             name="note"
