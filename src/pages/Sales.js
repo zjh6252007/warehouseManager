@@ -120,6 +120,7 @@ const aggregatedData = React.useMemo(() => {
       note: base.note,
       transport: base.transport,
       salesperson: base.salesperson,
+      discount: base.discount,
       model: base.model,
       serialNumber: base.serialNumber,
       subtotal,

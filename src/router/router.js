@@ -19,7 +19,7 @@ const router = createBrowserRouter([
     children:[
         {
             path: "/", 
-            element: <Navigate to="/sales" />
+            element: <Navigate to="/store" />
           },
         {
             path:"/inventory",

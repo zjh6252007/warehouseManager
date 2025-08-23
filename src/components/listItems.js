@@ -318,7 +318,6 @@ export default function MainListItems({ isShowStore, onItemClick }) {
       {!isStorePage ? (
         <>
           {isShowStore && renderMenuItem('/store', <StoreIcon />, 'Store', onItemClick)}
-          {renderMenuItem('/sales', <ShoppingCartIcon />, 'Sales', onItemClick)}
           {renderMenuItem('/inventory', <InventoryIcon />, 'Inventory', onItemClick)}
           {!isShowStore && renderMenuItem('/delivery', <LocalShippingIcon />, 'Delivery', onItemClick)}
           {isShowStore && renderMenuItem('/reports', <SummarizeIcon />, 'Reports', onItemClick)}
