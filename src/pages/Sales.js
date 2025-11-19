@@ -243,10 +243,30 @@ const aggregatedData = React.useMemo(() => {
     handleCloseReceiptModal();
   };
 
-  const handleReturnItems = (selectedItems) => {
-    const sid = storeId || userInfo.storeId;
-    dispatch(returnSales(selectedItems, sid, userInfo.id, page, pageSize, searchText, userInfo));
-    handleCloseReturn();
+  const handleReturnItems = async (selectedItems, returnReason) => {
+    if (!selectedItems || selectedItems.length === 0) {
+      message.warning('Please select at least one item to return');
+      return;
+    }
+    
+    if (!returnReason || returnReason.trim().length === 0) {
+      message.error('Please enter a return reason');
+      return;
+    }
+    
+    try {
+      const sid = storeId || userInfo.storeId;
+      const res = await dispatch(returnSales(selectedItems, sid, userInfo.id, page, pageSize, searchText, userInfo, returnReason));
+      if (res && res.code === 0) {
+        message.success('Items returned successfully');
+        handleCloseReturn();
+      } else {
+        message.error(res?.message || 'Failed to return items');
+      }
+    } catch (error) {
+      console.error('Return error:', error);
+      message.error('Failed to return items. Please try again.');
+    }
   };
 
   const handleCancelOrder = (invoiceNumber, storeId) => {

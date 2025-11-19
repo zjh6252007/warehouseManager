@@ -25,12 +25,19 @@ const getAllInventory = () =>async(dispatch)=>{
     return res.data;
 }
 
-const addInventory = (data) => async (dispatch) => {
+const addInventory = (data, page = 0, pageSize = 20, keyword = "", userInfo = null, isStorePage = false) => async (dispatch) => {
     const res = await request.post("/api/inventory/addInventory", data);
   
     if (res.code === 0) {
-      // 直接调用 getInventoryById，因为 storeId 一定会传入
-      await dispatch(getInventoryById(data.store.id));
+      // 使用分页API刷新数据
+      if (isStorePage || userInfo?.role === 'user') {
+        await dispatch(getInventoryPagedByStore(data.store.id, page, pageSize, keyword));
+      } else if (userInfo?.role === 'admin') {
+        await dispatch(getInventoryPagedAdmin(page, pageSize, keyword));
+      } else {
+        // 回退到旧方法
+        await dispatch(getInventoryById(data.store.id));
+      }
     } else {
       console.error(res.message);
     }
@@ -44,13 +51,37 @@ const getInventory = () =>async(dispatch) =>{
     return res.data;
 }
 
-const getInventoryById=(id)=>async(dispatch)=>{
+const getInventoryById=(id)=>async(dispatch)=>{ 
     const res = await request.get(`/api/inventory/getInventory/${id}`);
     dispatch(setInventoryList(res.data));
     return res.data;
 }
 
-const uploadInventoryFile=(file,storeId) =>async(dispatch) =>{
+const getInventoryPagedAdmin = (page = 0, size = 20, keyword = "") => async (dispatch) => {
+    try {
+        const res = await request.get("/api/inventory/searchAdmin", {
+            params: { page, size, keyword }
+        });
+        dispatch(setInventoryList(res.data.content));
+        return res.data;
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+const getInventoryPagedByStore = (storeId, page = 0, size = 20, keyword = "") => async (dispatch) => {
+    try {
+        const res = await request.get("/api/inventory/searchByStore", {
+            params: { storeId, page, size, keyword }
+        });
+        dispatch(setInventoryList(res.data.content));
+        return res.data;
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+const uploadInventoryFile=(file,storeId, page = 0, pageSize = 20, keyword = "") =>async(dispatch) =>{
     const formData = new FormData();
     formData.append('file',file);
     formData.append('storeId',storeId);
@@ -61,7 +92,7 @@ const uploadInventoryFile=(file,storeId) =>async(dispatch) =>{
         timeout: 300000
     });
     if(res.code === 0){
-        await dispatch(getInventoryById(storeId));
+        await dispatch(getInventoryPagedByStore(storeId, page, pageSize, keyword));
     }else{
         console.error('File upload failed',res.message);
     }
@@ -95,6 +126,6 @@ const deleteInventory = (idList)=>async(dispatch)=>{
         console.log(error);
     }
 }
-export {getAllInventory,getInventory,decreseInventoryQty,getInventoryById,uploadInventoryFile,updateLimitPercentage,deleteInventory,addInventory};
+export {getAllInventory,getInventory,decreseInventoryQty,getInventoryById,uploadInventoryFile,updateLimitPercentage,deleteInventory,addInventory,getInventoryPagedAdmin,getInventoryPagedByStore};
 const inventoryReducer = inventory.reducer;
 export default inventoryReducer

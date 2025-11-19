@@ -9,7 +9,9 @@ import {
   getInventoryById,
   uploadInventoryFile,
   addInventory,
-  deleteInventory
+  deleteInventory,
+  getInventoryPagedAdmin,
+  getInventoryPagedByStore
 } from '../redux/modules/inventory';
 import { getStore } from '../redux/modules/myStore';
 import { useEffect, useState } from 'react';
@@ -33,6 +35,10 @@ const Inventory = () => {
   const [inventoryFormVisible, setInventoryFormVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingInventory, setEditingInventory] = useState(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(18);
+  const [totalItems, setTotalItems] = useState(0);
+  const [searchText, setSearchText] = useState("");
 
   // —— 移动端检测 —— 
   const theme = useTheme();
@@ -43,11 +49,14 @@ const Inventory = () => {
       setLoading(true);
       try {
         if (isStorePage) {
-          await dispatch(getInventoryById(storeId));
+          const res = await dispatch(getInventoryPagedByStore(storeId, page, pageSize, searchText));
+          setTotalItems(res?.totalElements || 0);
         } else if (userInfo.role === 'admin') {
-          await dispatch(getAllInventory());
+          const res = await dispatch(getInventoryPagedAdmin(page, pageSize, searchText));
+          setTotalItems(res?.totalElements || 0);
           await dispatch(getStore());
         } else {
+          // For regular users, still use the old API for now
           await dispatch(getInventory());
         }
       } finally {
@@ -55,7 +64,7 @@ const Inventory = () => {
       }
     };
     fetchData();
-  }, [dispatch, userInfo.role, isStorePage, storeId]);
+  }, [dispatch, userInfo.role, isStorePage, storeId, page, pageSize, searchText]);
 
   const columns = [
     { field: 'itemDescription', headerName: 'Item Description', width: 250 },
@@ -169,10 +178,10 @@ const Inventory = () => {
     try {
       if (!isStoreChanged) {
         await dispatch(deleteInventory([editingInventory.id]));
-        await dispatch(addInventory(inventoryData));
+        await dispatch(addInventory(inventoryData, page, pageSize, searchText, userInfo, isStorePage));
       } else {
         try {
-          await dispatch(addInventory(inventoryData));
+          await dispatch(addInventory(inventoryData, page, pageSize, searchText, userInfo, isStorePage));
           await dispatch(deleteInventory([editingInventory.id]));
         } catch (error) {
           console.error('Failed to add inventory:', error);
@@ -193,7 +202,7 @@ const Inventory = () => {
     if (!file) return;
 
     setLoading(true);
-    const res = await dispatch(uploadInventoryFile(file, storeId));
+    const res = await dispatch(uploadInventoryFile(file, storeId, page, pageSize, searchText));
     setLoading(false);
 
     if (res.code !== 0) {
@@ -264,25 +273,45 @@ const Inventory = () => {
             <InventoryToolbar numSelected={selectedRows.length} onDelete={handleDelete} />
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            {isStorePage && (
-              <Button variant="contained" component="label" disabled={loading}>
-                {loading ? <CircularProgress size={24} /> : 'Import Inventory'}
-                <input type="file" hidden accept=".csv" onChange={handleFileChange} />
-              </Button>
-            )}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flex: 1, minWidth: 200 }}>
+              <input
+                type="text"
+                placeholder="Search by SKU, Model, Description, or Brand"
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setPage(0);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              {isStorePage && (
+                <Button variant="contained" component="label" disabled={loading}>
+                  {loading ? <CircularProgress size={24} /> : 'Import Inventory'}
+                  <input type="file" hidden accept=".csv" onChange={handleFileChange} />
+                </Button>
+              )}
 
-            {userInfo.role === 'admin' && (
-              <Button variant="contained" onClick={handleDownload} sx={{ ml: 2 }}>
-                Download Inventory
-              </Button>
-            )}
+              {userInfo.role === 'admin' && (
+                <Button variant="contained" onClick={handleDownload}>
+                  Download Inventory
+                </Button>
+              )}
 
-            {isStorePage && (
-              <Button variant="contained" sx={{ ml: 2 }} onClick={() => setInventoryFormVisible(true)}>
-                Add Inventory
-              </Button>
-            )}
+              {isStorePage && (
+                <Button variant="contained" onClick={() => setInventoryFormVisible(true)}>
+                  Add Inventory
+                </Button>
+              )}
+            </Box>
           </Box>
 
           {selectedRows.length > 0 && userInfo.role === 'admin' && (
@@ -304,12 +333,16 @@ const Inventory = () => {
           <DataGrid
             rows={processedInventoryData}
             columns={displayedColumns}
-            initialState={{
-              pagination: { paginationModel: { page: 0, pageSize: 18 } },
-              sorting: { sortModel: [{ field: 'uploadDate', sort: 'desc' }] }
+            paginationMode="server"
+            rowCount={totalItems}
+            page={page}
+            pageSize={pageSize}
+            pageSizeOptions={[10, 18, 25, 50]}
+            onPaginationModelChange={(model) => {
+              setPage(model.page);
+              setPageSize(model.pageSize);
             }}
-            pageSize={18}
-            pageSizeOptions={[5, 10, 18, 25]}
+            loading={loading}
             checkboxSelection
             onRowSelectionModelChange={newSelectionModel => {
               const selectedIDs = new Set(newSelectionModel);
@@ -319,6 +352,9 @@ const Inventory = () => {
               setSelectedRows(filtered);
             }}
             isRowSelectable={params => params.row.status !== 'sold'}
+            initialState={{
+              sorting: { sortModel: [{ field: 'uploadDate', sort: 'desc' }] }
+            }}
           />
 
           <InventoryForm

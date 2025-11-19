@@ -71,16 +71,20 @@ const getSalesByDate =(date,storeId) =>async(dispatch) =>{
         console.log(error)
     }
 }
-const returnSales = (returnList, storeId, userId, page = 0, pageSize = 20, keyword = "", userInfo) =>async(dispatch)=>{
+const returnSales = (returnList, storeId, userId, page = 0, pageSize = 20, keyword = "", userInfo, returnReason = "") =>async(dispatch)=>{ 
     try{
         const res = await request.post(`/api/sales/return`,{
                 returnList,
-                userId
+                userId,
+                returnReason
         });
-        refreshSalesListAfterChange(dispatch, userInfo, storeId, page, pageSize, keyword);
+        if (res.code === 0) {
+            await refreshSalesListAfterChange(dispatch, userInfo, storeId, page, pageSize, keyword);
+        }
         return res;
     }catch(error){
         console.log(error);
+        throw error;
     }
 }
 

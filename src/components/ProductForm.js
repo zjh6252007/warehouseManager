@@ -78,7 +78,7 @@ const ProductForm = ({ handleClose }) => {
       setSelectedModel(selectedItem);
       formRef.current?.setFieldsValue({
         price: selectedItem.unitRetail,
-        type: selectedItem.product
+        type: selectedItem.product || '' // 如果 product 为空，设置为空字符串
       });
       const skus = relatedItems.map(item => ({ label: item.sku, value: item.sku }));
       setSkuOptions(skus);
@@ -314,7 +314,7 @@ const renderOtherDescriptions = (customer, cart) => {
               storeId: store_info.id,
               model: item.model,
               price: item.price,
-              type: item.type,
+              type: item.type || '', // 确保 type 不为 null
               customer: customerData.customer,
               contact: customerData.contact,
               address: customerData.address,

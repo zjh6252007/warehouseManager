@@ -89,6 +89,7 @@ export default function MainListItems({ isShowStore, onItemClick }) {
           placement="bottom"
           destroyOnClose
           height="100vh"               // 全屏高度
+          maskClosable={false}         // 禁止点击遮罩层关闭
           bodyStyle={{                 // 禁止 Drawer 自带滚动
             padding: 0,
             height: '100%'
@@ -188,6 +189,7 @@ export default function MainListItems({ isShowStore, onItemClick }) {
         width="80vw"
         centered
         destroyOnClose
+        maskClosable={false}
       >
         <div
           style={{
