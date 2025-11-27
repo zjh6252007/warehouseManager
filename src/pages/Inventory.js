@@ -14,7 +14,7 @@ import {
   getInventoryPagedByStore
 } from '../redux/modules/inventory';
 import { getStore } from '../redux/modules/myStore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Button, Box, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
 import { useLocation, useParams } from 'react-router-dom';
 import InventoryToolbar from '../components/InventoryToolBar';
@@ -39,20 +39,55 @@ const Inventory = () => {
   const [pageSize, setPageSize] = useState(18);
   const [totalItems, setTotalItems] = useState(0);
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearchText, setDebouncedSearchText] = useState("");
+  const [sortModel, setSortModel] = useState([{ field: 'uploadDate', sort: 'desc' }]);
+  const isInitialMount = useRef(true);
+  const prevDebouncedSearchTextRef = useRef("");
+  const prevPageRef = useRef(page);
+  const prevSortModelRef = useRef(sortModel);
 
   // —— 移动端检测 —— 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+  // 防抖处理搜索文本
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+      setPage(0); // 搜索时重置到第一页
+    }, 1000); // 1000ms 延迟，减少闪烁
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      // 判断是否是搜索触发的更新（debouncedSearchText 改变，但 page 和 sortModel 没变）
+      const isSearchUpdate = prevDebouncedSearchTextRef.current !== debouncedSearchText && 
+                             prevPageRef.current === page && 
+                             JSON.stringify(prevSortModelRef.current) === JSON.stringify(sortModel);
+      
+      // 只在初始加载或非搜索操作（分页、排序）时显示 loading
+      // 搜索时不显示 loading，避免闪烁
+      if (isInitialMount.current || !isSearchUpdate) {
+        setLoading(true);
+      }
+      
+      // 更新引用
+      prevDebouncedSearchTextRef.current = debouncedSearchText;
+      prevPageRef.current = page;
+      prevSortModelRef.current = sortModel;
+      
       try {
+        // 从 sortModel 中提取排序信息
+        const sortField = sortModel.length > 0 ? sortModel[0].field : 'uploadDate';
+        const sortDirection = sortModel.length > 0 ? sortModel[0].sort : 'desc';
+        
         if (isStorePage) {
-          const res = await dispatch(getInventoryPagedByStore(storeId, page, pageSize, searchText));
+          const res = await dispatch(getInventoryPagedByStore(storeId, page, pageSize, debouncedSearchText, sortField, sortDirection));
           setTotalItems(res?.totalElements || 0);
         } else if (userInfo.role === 'admin') {
-          const res = await dispatch(getInventoryPagedAdmin(page, pageSize, searchText));
+          const res = await dispatch(getInventoryPagedAdmin(page, pageSize, debouncedSearchText, sortField, sortDirection));
           setTotalItems(res?.totalElements || 0);
           await dispatch(getStore());
         } else {
@@ -61,10 +96,11 @@ const Inventory = () => {
         }
       } finally {
         setLoading(false);
+        isInitialMount.current = false;
       }
     };
     fetchData();
-  }, [dispatch, userInfo.role, isStorePage, storeId, page, pageSize, searchText]);
+  }, [dispatch, userInfo.role, isStorePage, storeId, page, pageSize, debouncedSearchText, sortModel]);
 
   const columns = [
     { field: 'itemDescription', headerName: 'Item Description', width: 250 },
@@ -178,10 +214,10 @@ const Inventory = () => {
     try {
       if (!isStoreChanged) {
         await dispatch(deleteInventory([editingInventory.id]));
-        await dispatch(addInventory(inventoryData, page, pageSize, searchText, userInfo, isStorePage));
+        await dispatch(addInventory(inventoryData, page, pageSize, debouncedSearchText, userInfo, isStorePage));
       } else {
         try {
-          await dispatch(addInventory(inventoryData, page, pageSize, searchText, userInfo, isStorePage));
+          await dispatch(addInventory(inventoryData, page, pageSize, debouncedSearchText, userInfo, isStorePage));
           await dispatch(deleteInventory([editingInventory.id]));
         } catch (error) {
           console.error('Failed to add inventory:', error);
@@ -202,7 +238,7 @@ const Inventory = () => {
     if (!file) return;
 
     setLoading(true);
-    const res = await dispatch(uploadInventoryFile(file, storeId, page, pageSize, searchText));
+    const res = await dispatch(uploadInventoryFile(file, storeId, page, pageSize, debouncedSearchText));
     setLoading(false);
 
     if (res.code !== 0) {
@@ -281,7 +317,6 @@ const Inventory = () => {
                 value={searchText}
                 onChange={(e) => {
                   setSearchText(e.target.value);
-                  setPage(0);
                 }}
                 style={{
                   width: '100%',
@@ -334,6 +369,7 @@ const Inventory = () => {
             rows={processedInventoryData}
             columns={displayedColumns}
             paginationMode="server"
+            sortingMode="server"
             rowCount={totalItems}
             page={page}
             pageSize={pageSize}
@@ -342,6 +378,11 @@ const Inventory = () => {
               setPage(model.page);
               setPageSize(model.pageSize);
             }}
+            onSortModelChange={(model) => {
+              setSortModel(model);
+              setPage(0); // 排序时重置到第一页
+            }}
+            sortModel={sortModel}
             loading={loading}
             checkboxSelection
             onRowSelectionModelChange={newSelectionModel => {

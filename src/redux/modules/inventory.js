@@ -57,10 +57,10 @@ const getInventoryById=(id)=>async(dispatch)=>{
     return res.data;
 }
 
-const getInventoryPagedAdmin = (page = 0, size = 20, keyword = "") => async (dispatch) => {
+const getInventoryPagedAdmin = (page = 0, size = 20, keyword = "", sortField = "uploadDate", sortDirection = "desc") => async (dispatch) => {
     try {
         const res = await request.get("/api/inventory/searchAdmin", {
-            params: { page, size, keyword }
+            params: { page, size, keyword, sortField, sortDirection }
         });
         dispatch(setInventoryList(res.data.content));
         return res.data;
@@ -69,10 +69,10 @@ const getInventoryPagedAdmin = (page = 0, size = 20, keyword = "") => async (dis
     }
 };
 
-const getInventoryPagedByStore = (storeId, page = 0, size = 20, keyword = "") => async (dispatch) => {
+const getInventoryPagedByStore = (storeId, page = 0, size = 20, keyword = "", sortField = "uploadDate", sortDirection = "desc") => async (dispatch) => {
     try {
         const res = await request.get("/api/inventory/searchByStore", {
-            params: { storeId, page, size, keyword }
+            params: { storeId, page, size, keyword, sortField, sortDirection }
         });
         dispatch(setInventoryList(res.data.content));
         return res.data;

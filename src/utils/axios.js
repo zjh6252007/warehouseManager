@@ -12,7 +12,7 @@ const request = axios.create({
 // 防止重复跳转的标记
 let isRedirecting = false;
 
-request.interceptors.request.use((config)=>{ 
+request.interceptors.request.use((config)=>{
     const token = getToken();
     
     // 检查 token 是否过期
@@ -27,8 +27,8 @@ request.interceptors.request.use((config)=>{
         return Promise.reject(new Error('Token expired'));
     }
     
-    config.headers.Authorization= `Bearer ${token}`
-    return config;
+  config.headers.Authorization= `Bearer ${token}`
+  return config;
 },(error)=>{
     return Promise.reject(error);
 });
