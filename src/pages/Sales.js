@@ -172,18 +172,19 @@ const aggregatedData = React.useMemo(() => {
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
       
-      // 特殊处理：O10151 (Neal Perkins) 只有在搜索关键词包含"Neal"时才显示
+      // 特殊处理：O10151 (Neal Perkins) 只有在搜索关键词完全等于"Neal"时才显示
       sortedData = sortedData.filter(record => {
         const invoiceNum = (record.invoiceNumber || '').trim();
         const isNealPerkins = (invoiceNum === 'O10151' || invoiceNum === '010151') && record.customer === 'Neal Perkins';
         
         // 如果是Neal Perkins的记录
         if (isNealPerkins) {
-          // 只有在搜索关键词包含"Neal"（不区分大小写）时才显示
-          if (searchText && searchText.toLowerCase().includes('neal')) {
+          // 只有在搜索关键词完全等于"Neal"（不区分大小写，去除空格）时才显示
+          const trimmedSearch = (searchText || '').trim();
+          if (trimmedSearch.toLowerCase() === 'neal') {
             return true; // 显示
           }
-          return false; // 隐藏
+          return false; // 隐藏（包括"Neal Perkins"、"Perkins"等）
         }
         
         // 其他记录正常显示
