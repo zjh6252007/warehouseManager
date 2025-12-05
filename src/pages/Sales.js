@@ -68,9 +68,12 @@ export default function Sales() {
 
   const formatDate = (dateString, record) => {
     if (!dateString) return 'Unknown Date';
-    // 特殊处理：O10151 (Neal Perkins) 在表单中显示 10/25/2025
-    if (record && record.invoiceNumber === 'O10151' && record.customer === 'Neal Perkins') {
-      return '10/25/2025';
+    // 特殊处理：010151 或 O10151 (Neal Perkins) 在表单中显示 10/25/2025
+    if (record && record.customer === 'Neal Perkins') {
+      const invoiceNum = record.invoiceNumber || '';
+      if (invoiceNum === '010151' || invoiceNum === 'O10151') {
+        return '10/25/2025';
+      }
     }
     const date = moment(dateString);
     if (!date.isValid()) {
@@ -145,11 +148,11 @@ const aggregatedData = React.useMemo(() => {
   useEffect(() => {
     if (salesInfo && salesInfo.length > 0) {
       // 自定义排序：将O10151 (Neal Perkins) 插入到O10158和O10156之间
-      const sortedData = [...aggregatedData].sort((a, b) => {
+      let sortedData = [...aggregatedData].sort((a, b) => {
         const aInvoice = a.invoiceNumber;
         const bInvoice = b.invoiceNumber;
-        const aIsO10151 = aInvoice === 'O10151' && a.customer === 'Neal Perkins';
-        const bIsO10151 = bInvoice === 'O10151' && b.customer === 'Neal Perkins';
+        const aIsO10151 = (aInvoice === 'O10151' || aInvoice === '010151') && a.customer === 'Neal Perkins';
+        const bIsO10151 = (bInvoice === 'O10151' || bInvoice === '010151') && b.customer === 'Neal Perkins';
         const aIsO10158 = aInvoice === 'O10158';
         const bIsO10158 = bInvoice === 'O10158';
         const aIsO10156 = aInvoice === 'O10156';
@@ -157,9 +160,9 @@ const aggregatedData = React.useMemo(() => {
         
         // 定义排序优先级：O10158 = 1, O10151 = 2, O10156 = 3, 其他 = 4
         const getPriority = (invoice, customer) => {
-          if (invoice === 'O10158') return 1;
-          if (invoice === 'O10151' && customer === 'Neal Perkins') return 2;
-          if (invoice === 'O10156') return 3;
+          if (invoice === 'O10158' || invoice === '010158') return 1;
+          if ((invoice === 'O10151' || invoice === '010151') && customer === 'Neal Perkins') return 2;
+          if (invoice === 'O10156' || invoice === '010156') return 3;
           return 4;
         };
         
@@ -175,11 +178,20 @@ const aggregatedData = React.useMemo(() => {
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
       
+      // 特殊处理：如果搜索关键词包含"Neal"（不区分大小写），过滤掉所有包含"Neal"的记录
+      if (searchText && searchText.toLowerCase().includes('neal')) {
+        sortedData = sortedData.filter(record => {
+          const customerName = (record.customer || '').toLowerCase();
+          const invoiceNumber = (record.invoiceNumber || '').toLowerCase();
+          return !customerName.includes('neal') && !invoiceNumber.includes('neal') && !invoiceNumber.includes('010151');
+        });
+      }
+      
       setFilteredData(sortedData);
     } else {
       setFilteredData([]);
     }
-  }, [salesInfo, aggregatedData]);
+  }, [salesInfo, aggregatedData, searchText]);
 
   const handleOpenReturn = (record) => {
     setReturnList(record.items || []);
@@ -239,9 +251,10 @@ const aggregatedData = React.useMemo(() => {
   };
 
   const handleReceipt = (record, storeInfo) => {
-    // 对于O10151 (Neal Perkins)，确保使用原始日期而不是显示的日期
+    // 对于010151 或 O10151 (Neal Perkins)，确保使用原始日期而不是显示的日期
     let receiptRecord = { ...record };
-    if (record.invoiceNumber === 'O10151' && record.customer === 'Neal Perkins') {
+    const invoiceNum = record.invoiceNumber || '';
+    if ((invoiceNum === 'O10151' || invoiceNum === '010151') && record.customer === 'Neal Perkins') {
       // 保持原始的createdAt，不修改
       receiptRecord = record;
     }
