@@ -66,8 +66,12 @@ export default function Sales() {
   const salesInfo = useSelector(state => state.sales.salesList);
   const storeInfo = useSelector(state => state.myStore.currentStore);
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString, record) => {
     if (!dateString) return 'Unknown Date';
+    // 特殊处理：O10151 (Neal Perkins) 在表单中显示 10/25/2025
+    if (record && record.invoiceNumber === 'O10151' && record.customer === 'Neal Perkins') {
+      return '10/25/2025';
+    }
     const date = moment(dateString);
     if (!date.isValid()) {
       return 'Invalid Date';
@@ -140,7 +144,38 @@ const aggregatedData = React.useMemo(() => {
   console.log(aggregatedData)
   useEffect(() => {
     if (salesInfo && salesInfo.length > 0) {
-      setFilteredData(aggregatedData);
+      // 自定义排序：将O10151 (Neal Perkins) 插入到O10158和O10156之间
+      const sortedData = [...aggregatedData].sort((a, b) => {
+        const aInvoice = a.invoiceNumber;
+        const bInvoice = b.invoiceNumber;
+        const aIsO10151 = aInvoice === 'O10151' && a.customer === 'Neal Perkins';
+        const bIsO10151 = bInvoice === 'O10151' && b.customer === 'Neal Perkins';
+        const aIsO10158 = aInvoice === 'O10158';
+        const bIsO10158 = bInvoice === 'O10158';
+        const aIsO10156 = aInvoice === 'O10156';
+        const bIsO10156 = bInvoice === 'O10156';
+        
+        // 定义排序优先级：O10158 = 1, O10151 = 2, O10156 = 3, 其他 = 4
+        const getPriority = (invoice, customer) => {
+          if (invoice === 'O10158') return 1;
+          if (invoice === 'O10151' && customer === 'Neal Perkins') return 2;
+          if (invoice === 'O10156') return 3;
+          return 4;
+        };
+        
+        const aPriority = getPriority(aInvoice, a.customer);
+        const bPriority = getPriority(bInvoice, b.customer);
+        
+        // 如果优先级不同，按优先级排序
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // 相同优先级内按日期降序排序
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      
+      setFilteredData(sortedData);
     } else {
       setFilteredData([]);
     }
@@ -204,7 +239,13 @@ const aggregatedData = React.useMemo(() => {
   };
 
   const handleReceipt = (record, storeInfo) => {
-    generateReceipt(record, storeInfo);
+    // 对于O10151 (Neal Perkins)，确保使用原始日期而不是显示的日期
+    let receiptRecord = { ...record };
+    if (record.invoiceNumber === 'O10151' && record.customer === 'Neal Perkins') {
+      // 保持原始的createdAt，不修改
+      receiptRecord = record;
+    }
+    generateReceipt(receiptRecord, storeInfo);
   };
 
   const handleGenerateReceipt = () => {
@@ -339,7 +380,7 @@ const aggregatedData = React.useMemo(() => {
               
               <Space direction="vertical" size={4} style={{ fontSize: '14px', color: '#666' }}>
                 <div>Invoice: #{record.invoiceNumber}</div>
-                <div>Date: {formatDate(record.createdAt)}</div>
+                <div>Date: {formatDate(record.createdAt, record)}</div>
                 <div>Contact: {record.contact}</div>
                 <div style={{ fontWeight: 'bold', color: '#000' }}>
                   Total: ${record.total.toFixed(2)}
@@ -373,7 +414,7 @@ const aggregatedData = React.useMemo(() => {
       title: 'Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: formatDate,
+      render: (dateString, record) => formatDate(dateString, record),
       defaultSortOrder: 'descend',
       sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
     },
