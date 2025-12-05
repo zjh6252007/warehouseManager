@@ -149,14 +149,8 @@ const aggregatedData = React.useMemo(() => {
     if (salesInfo && salesInfo.length > 0) {
       // 自定义排序：将O10151 (Neal Perkins) 插入到O10158和O10156之间
       let sortedData = [...aggregatedData].sort((a, b) => {
-        const aInvoice = a.invoiceNumber;
-        const bInvoice = b.invoiceNumber;
-        const aIsO10151 = (aInvoice === 'O10151' || aInvoice === '010151') && a.customer === 'Neal Perkins';
-        const bIsO10151 = (bInvoice === 'O10151' || bInvoice === '010151') && b.customer === 'Neal Perkins';
-        const aIsO10158 = aInvoice === 'O10158';
-        const bIsO10158 = bInvoice === 'O10158';
-        const aIsO10156 = aInvoice === 'O10156';
-        const bIsO10156 = bInvoice === 'O10156';
+        const aInvoice = a.invoiceNumber || '';
+        const bInvoice = b.invoiceNumber || '';
         
         // 定义排序优先级：O10158 = 1, O10151 = 2, O10156 = 3, 其他 = 4
         const getPriority = (invoice, customer) => {
@@ -174,7 +168,7 @@ const aggregatedData = React.useMemo(() => {
           return aPriority - bPriority;
         }
         
-        // 相同优先级内按日期降序排序
+        // 相同优先级内按日期降序排序（最新的在前）
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
       
