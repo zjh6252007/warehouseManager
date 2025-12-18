@@ -106,6 +106,11 @@ const aggregatedData = React.useMemo(() => {
     // 取第一个明细的字段
     const base = sales[0] || {};
     let subtotal = 0, total = 0, totalTax = 0, deliveryFee = 0;
+    // 先找到第一个非 accessory 的 item 来获取 deliveryFee
+    const nonAccessoryItem = sales.find(item => item.type !== 'Accessory');
+    if (nonAccessoryItem) {
+      deliveryFee = parseFloat(nonAccessoryItem.deliveryFee) || 0;
+    }
     sales.forEach(item => {
       subtotal += parseFloat(item.price) || 0;
       total += parseFloat(item.price) || 0;
@@ -114,7 +119,6 @@ const aggregatedData = React.useMemo(() => {
       total -= parseFloat(item.discount) || 0;
       total += parseFloat(item.installationFee) || 0;
       totalTax += parseFloat(item.taxes) || 0;
-      deliveryFee = parseFloat(item.deliveryFee) || 0;
     });
     total = parseFloat((total + deliveryFee).toFixed(2));
     return {

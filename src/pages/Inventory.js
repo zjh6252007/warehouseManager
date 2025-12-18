@@ -38,6 +38,7 @@ const Inventory = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(18);
   const [totalItems, setTotalItems] = useState(0);
+  const pageSizeRef = useRef(18); // 使用 ref 来跟踪实际的 pageSize，防止被意外改变
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
   const [sortModel, setSortModel] = useState([{ field: 'uploadDate', sort: 'desc' }]);
@@ -49,6 +50,11 @@ const Inventory = () => {
   // —— 移动端检测 —— 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // 同步 pageSize 到 ref
+  useEffect(() => {
+    pageSizeRef.current = pageSize;
+  }, [pageSize]);
 
   // 防抖处理搜索文本
   useEffect(() => {
@@ -371,12 +377,28 @@ const Inventory = () => {
             paginationMode="server"
             sortingMode="server"
             rowCount={totalItems}
-            page={page}
-            pageSize={pageSize}
+            paginationModel={{ page, pageSize }}
             pageSizeOptions={[10, 18, 25, 50]}
             onPaginationModelChange={(model) => {
-              setPage(model.page);
-              setPageSize(model.pageSize);
+              const newPageSize = model.pageSize;
+              const newPage = model.page;
+              
+              // 如果 pageSize 改变了（且是用户主动改变的，在 pageSizeOptions 中）
+              if (newPageSize !== pageSizeRef.current && [10, 18, 25, 50].includes(newPageSize)) {
+                pageSizeRef.current = newPageSize;
+                setPageSize(newPageSize);
+                setPage(0); // 改变 pageSize 时重置到第一页
+              } else if (newPageSize !== pageSizeRef.current) {
+                // DataGrid 传递了错误的 pageSize（比如默认的 100），忽略它，只更新 page
+                setPage(newPage);
+                // 只有当当前 pageSize state 与 ref 不一致时才更新（避免不必要的渲染）
+                if (pageSize !== pageSizeRef.current) {
+                  setPageSize(pageSizeRef.current);
+                }
+              } else {
+                // 只是翻页，pageSize 没变
+                setPage(newPage);
+              }
             }}
             onSortModelChange={(model) => {
               setSortModel(model);
