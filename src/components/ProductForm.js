@@ -47,6 +47,16 @@ const ProductForm = ({ handleClose }) => {
     }
   }, [dispatch, isStorePage, store_info]);
 
+  // Set tax rate from store_info when it's loaded
+  useEffect(() => {
+    if (store_info?.taxRate !== undefined) {
+      setTaxRate(store_info.taxRate);
+      formRef.current?.setFieldsValue({
+        tax_rate: store_info.taxRate
+      });
+    }
+  }, [store_info]);
+
   const inventoryList = useSelector(state => state.inventory.inventoryList);
   const formRef = useRef();
   const [skuOptions, setSkuOptions] = useState([]);
@@ -139,6 +149,15 @@ const ProductForm = ({ handleClose }) => {
     formRef.current
       ?.validateFields()
       .then(values => {
+        // Validate freewarranty is a number
+        if (values.freewarranty === undefined || values.freewarranty === null || values.freewarranty === '') {
+          message.error('Please enter a number for Free Warranty');
+          return;
+        }
+        if (isNaN(values.freewarranty) || parseFloat(values.freewarranty) < 0) {
+          message.error('Free Warranty must be a valid number');
+          return;
+        }
         dispatch(addToCart(values));
         message.success('Added to cart');
         formRef.current?.resetFields();
@@ -452,7 +471,19 @@ const renderOtherDescriptions = (customer, cart) => {
             label="Free Warranty"
             width="30%"
             placeholder="warranty"
-            initialValue={1}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (value === undefined || value === null || value === '') {
+                    return Promise.reject(new Error('Please enter a number for Free Warranty'));
+                  }
+                  if (isNaN(value) || parseFloat(value) < 0) {
+                    return Promise.reject(new Error('Free Warranty must be a valid number'));
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
             fieldProps={{
               addonAfter: 'year',
               type: 'number'
@@ -656,8 +687,7 @@ const renderOtherDescriptions = (customer, cart) => {
               label="Tax Rate"
               width="50%"
               placeholder="tax"
-              value={taxRate}
-              initialValue={0}
+              initialValue={store_info?.taxRate || 0}
               fieldProps={{
                 addonBefore: '%',
                 type: 'number',

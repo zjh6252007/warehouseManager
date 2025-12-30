@@ -418,6 +418,11 @@ const Inventory = () => {
             initialState={{
               sorting: { sortModel: [{ field: 'uploadDate', sort: 'desc' }] }
             }}
+            disableColumnFilter
+            disableColumnMenu
+            disableColumnSelector
+            disableDensitySelector
+            disableEval
           />
 
           <InventoryForm
