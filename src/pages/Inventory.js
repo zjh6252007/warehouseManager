@@ -139,6 +139,18 @@ const Inventory = () => {
       )
     },
     { field: 'soldDate', headerName: 'Sold Date', width: 150 },
+    {
+      field: 'soldPrice',
+      headerName: 'Actual Sale Price',
+      width: 150,
+      renderCell: params => {
+        if (params.row.status !== 'sold') return '—';
+        const v = params.value;
+        return v != null && v !== '' && !isNaN(Number(v))
+          ? `$${Number(v).toFixed(2)}`
+          : '—';
+      }
+    },
     { field: 'sku', headerName: 'SKU', width: 100 },
     { field: 'category', headerName: 'Category', width: 160, hide: true },
     { field: 'subcategory', headerName: 'Subcategory', width: 220, hide: true },
